@@ -9,18 +9,15 @@ import (
 
 func main() {
 	// Initialize the board with specific dimensions
-	width, height := 21, 19
+	width, height := 11, 13
 	// Create a word pool with some sample words
-	words := []string{"example", "crossword", "puzzle", "symmetry", "generation", "horizontal", "vertical", "language", "programming", "golang"}
+	words := []string{"example", "eagel", "eat", "long", "oxymoron", "car", "house"}
 	// totalWords := 10
 	// center := models.Location{X: width / 2, Y: height / 2} // Center
 
 	// Create the board bouindaries for the crosword puzzle
 	bounds, _ := models.NewBoundsRectangle(width, height)
 	board := models.NewBoard(bounds, len(words))
-
-	// FIXME: remove debug logging
-	fmt.Println(board.Cells[0])
 
 	// initialize a new pool of words.
 	newPool := models.NewPool()
@@ -35,7 +32,8 @@ func main() {
 		return
 	}
 
-	// fmt.Println(b)
+	// FIXME: remove debug logging
+	printBoard(board)
 }
 
 // printBoard prints the crossword board to the console.

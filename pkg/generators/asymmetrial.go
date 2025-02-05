@@ -23,32 +23,64 @@ func NewAsymmetricalGenerator(board *models.Board, pool *models.Pool) *Asymmetri
 
 // Generate implements the Generate method for generating asymmetrical crossword puzzles.
 func (ag *AsymmetricalGenerator) Generate() error {
-	// Basic implementation outline:
-	// 1. Select a starting point and direction randomly or based on some heuristic.
-	// 2. Choose a word from the pool that fits the selected location and direction.
-	// 3. Place the word on the board if it fits without conflicts.
-	// 4. Repeat until no more words can be placed or the puzzle meets the design criteria.
+	// Place the first word at the center horizontally.
+	firstWord := ag.WordPool.Words[0]
+	midRow := ag.Board.Bounds.Height() / 2
+	midCol := (ag.Board.Bounds.Width() - len(firstWord)) / 2
 
-	// Example placeholder logic (needs actual implementation details):
-	for _, word := range ag.WordPool.Words {
-		// Attempt to place each word in the pool.
-		startLocation := models.Location{X: 0, Y: 0} // FIXME: This should be determined by some logic.
-		direction := models.Across                   // FIXME: This should also be decided dynamically.
+	err := ag.Board.PlaceWordAt(models.Location{X: midCol, Y: midRow}, firstWord, models.Across)
+	if err != nil {
+		return errors.New("failed to place the first word")
+	}
 
-		if ag.Board.CanPlaceWordAt(startLocation, word, direction) {
-			ag.Board.PlaceWordAt(startLocation, word, direction)
-		} else {
-			// If a word cannot be placed, you might skip or try a different location/direction.
-			continue
+	// Iterate through the rest of the words.
+	for _, word := range ag.WordPool.Words[1:] {
+		placed := false
+		for _, location := range ag.FindPlacementLocations(word) {
+			if ag.Board.CanPlaceWordAt(location.Start, word, location.Direction) {
+				ag.Board.PlaceWordAt(location.Start, word, location.Direction)
+				placed = true
+				break
+			}
+		}
+		if !placed {
+			return errors.New("failed to place a word: " + word)
 		}
 	}
 
-	// Check if the board is satisfactorily filled or if more words need to be placed.
 	if ag.Board.IsComplete() {
 		return nil
 	}
-
 	return errors.New("failed to generate a complete puzzle")
 }
 
-// Additional methods specific to asymmetrical puzzle logic can be added here.
+type Placement struct {
+	Start     models.Location
+	Direction models.Direction
+}
+
+// FindPlacementLocations generates a list of possible placement locations for a word.
+func (ag *AsymmetricalGenerator) FindPlacementLocations(word string) []Placement {
+	var placements []Placement
+
+	// Helper function to try placing a word in one direction
+	tryPlaceWord := func(x, y int, dir models.Direction) {
+		if ag.Board.CanPlaceWordAt(models.Location{X: x, Y: y}, word, dir) {
+			placements = append(placements, Placement{
+				Start:     models.Location{X: x, Y: y},
+				Direction: dir,
+			})
+		}
+	}
+
+	// Iterate over each cell in the board
+	for y := 0; y < len(ag.Board.Cells); y++ {
+		for x := 0; x < len(ag.Board.Cells[y]); x++ {
+			tryPlaceWord(x, y, models.Across) // Try horizontal placement
+			tryPlaceWord(x, y, models.Down)   // Try vertical placement
+		}
+	}
+
+	// Logic to find potential placements based on existing words on the board.
+	return placements
+}

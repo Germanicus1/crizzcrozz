@@ -1,5 +1,10 @@
 package models
 
+import (
+	"errors"
+	"fmt"
+)
+
 // Board represents the entire state of the crossword puzzle.
 type Board struct {
 	Bounds     *Bounds
@@ -30,6 +35,7 @@ func NewBoard(bounds *Bounds, totalWords int) *Board {
 // in a given direction.
 func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction) bool {
 	deltaX, deltaY := getDirectionDeltas(direction)
+	intersected := false // To check if at least one letter overlaps with existing words
 
 	for i := 0; i < len(word); i++ {
 		x := start.X + i*deltaX
@@ -41,8 +47,13 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 		if isCellConflict(x, y, b, rune(word[i])) {
 			return false
 		}
+		if b.Cells[y][x].Filled && b.Cells[y][x].Character == rune(word[i]) {
+			intersected = true // Ensure the new word intersects at least once
+		}
 	}
-	return true
+
+	// Ensure the word intersects with existing words on the board
+	return intersected
 }
 
 // getDirectionDeltas determines the increments (deltaX, deltaY) for x
@@ -67,11 +78,37 @@ func isCellConflict(x, y int, b *Board, char rune) bool {
 	return cell.Filled && cell.Character != char
 }
 
-// PlaceWordAt places a word on the board at the specified location and
-// direction.
-func (b *Board) PlaceWordAt(start Location, word string, direction Direction) {
-	// Logic to place the word on the board.
+// PlaceWordAt attempts to place a word on the board at the specified location and direction.
+// It returns an error if the placement is not possible.
+func (b *Board) PlaceWordAt(start Location, word string, direction Direction) error {
+	deltaX, deltaY := getDirectionDeltas(direction)
+
+	for i := 0; i < len(word); i++ {
+		x := start.X + i*deltaX
+		y := start.Y + i*deltaY
+
+		// Check if the current position is out of the board's bounds.
+		if y >= len(b.Cells) || x >= len(b.Cells[y]) {
+			return errors.New("placement is out of the board's bounds")
+		}
+
+		// Check if the cell is already filled with a different character.
+		if b.Cells[y][x].Filled && b.Cells[y][x].Character != rune(word[i]) {
+			return fmt.Errorf("conflict at position (%d, %d), the cell is already occupied by a different character", x, y)
+		}
+	}
+
+	// If all checks are passed, place the word on the board.
+	for i := 0; i < len(word); i++ {
+		x := start.X + i*deltaX
+		y := start.Y + i*deltaY
+		b.Cells[y][x].Character = rune(word[i])
+		b.Cells[y][x].Filled = true
+	}
 	b.WordCount++
+	fmt.Println("Words placed:", b.WordCount)
+
+	return nil
 }
 
 // IsComplete checks if the board is fully set up with all words placed.
