@@ -29,9 +29,42 @@ func NewBoard(bounds *Bounds, totalWords int) *Board {
 // CanPlaceWordAt checks if a word can be placed at a specific location
 // in a given direction.
 func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction) bool {
-	// Add logic to determine if a word can be placed here based on
-	// current board state.
-	return true // Placeholder
+	deltaX, deltaY := getDirectionDeltas(direction)
+
+	for i := 0; i < len(word); i++ {
+		x := start.X + i*deltaX
+		y := start.Y + i*deltaY
+
+		if isOutOfBound(x, y, b) {
+			return false
+		}
+		if isCellConflict(x, y, b, rune(word[i])) {
+			return false
+		}
+	}
+	return true
+}
+
+// getDirectionDeltas determines the increments (deltaX, deltaY) for x
+// and y based on the direction.
+func getDirectionDeltas(direction Direction) (int, int) {
+	if direction == Across {
+		return 1, 0
+	}
+	return 0, 1
+}
+
+// isOutOfBound checks if a cell fits on the board
+func isOutOfBound(x, y int, b *Board) bool {
+	return x >= len(b.Cells[0]) || y >= len(b.Cells)
+}
+
+// isCellConflict checks if there are any conflicts character. The
+// conflict tested for is: overlapping character matches the current
+// charater or not.
+func isCellConflict(x, y int, b *Board, char rune) bool {
+	cell := b.Cells[y][x]
+	return cell.Filled && cell.Character != char
 }
 
 // PlaceWordAt places a word on the board at the specified location and

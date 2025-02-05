@@ -19,11 +19,14 @@ func main() {
 	bounds, _ := models.NewBoundsRectangle(width, height)
 	board := models.NewBoard(bounds, len(words))
 
+	// FIXME: remove debug logging
+	fmt.Println(board.Cells[0])
+
 	// initialize a new pool of words.
 	newPool := models.NewPool()
 	newPool.LoadWords(words)
 
-	generator := generator.NewBaseGenerator(board)
+	generator := generator.NewAsymmetricalGenerator(board, newPool)
 
 	// Generate the crossword
 	err := generator.Generate()
@@ -32,10 +35,7 @@ func main() {
 		return
 	}
 
-	//FIXME: Remove debug logging
-	// fmt.Println("WordPool:", newPool.Words)
-	// fmt.Println("WordPool:", newPool.ByLength)
-	// printBoard(board)
+	// fmt.Println(b)
 }
 
 // printBoard prints the crossword board to the console.
