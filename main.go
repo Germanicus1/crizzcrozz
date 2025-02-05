@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	generator "github.com/Germanicus1/crizzcrozz/pkg/generators"
 	"github.com/Germanicus1/crizzcrozz/pkg/models"
 )
 
@@ -22,11 +23,19 @@ func main() {
 	newPool := models.NewPool()
 	newPool.LoadWords(words)
 
+	generator := generator.NewBaseGenerator(board)
+
+	// Generate the crossword
+	err := generator.Generate()
+	if err != nil {
+		fmt.Println("Failed to generate the crossword:", err)
+		return
+	}
+
 	//FIXME: Remove debug logging
-	fmt.Println("WordPool:", newPool.Words)
-	fmt.Println("WordPool:", newPool.ByLength)
-	// fmt.Println("Board:", b)
-	printBoard(board)
+	// fmt.Println("WordPool:", newPool.Words)
+	// fmt.Println("WordPool:", newPool.ByLength)
+	// printBoard(board)
 }
 
 // printBoard prints the crossword board to the console.
