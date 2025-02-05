@@ -22,7 +22,7 @@ func main() {
 	newPool := models.NewPool()
 	newPool.LoadWords(words)
 
-	//FIX: Remove debug logging
+	//FIXME: Remove debug logging
 	fmt.Println("WordPool:", newPool.Words)
 	fmt.Println("WordPool:", newPool.ByLength)
 	// fmt.Println("Board:", b)
