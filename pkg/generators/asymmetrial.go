@@ -2,6 +2,7 @@ package generators
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Germanicus1/crizzcrozz/pkg/models"
 )
@@ -37,8 +38,12 @@ func (ag *AsymmetricalGenerator) Generate() error {
 	for _, word := range ag.WordPool.Words[1:] {
 		placed := false
 		for _, location := range ag.FindPlacementLocations(word) {
+			// FIXME: remove debug info
+			// fmt.Printf("Location %+v for %s\n", location, word)
+
 			if ag.Board.CanPlaceWordAt(location.Start, word, location.Direction) {
-				ag.Board.PlaceWordAt(location.Start, word, location.Direction)
+				err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
+				fmt.Println("Error:", err)
 				placed = true
 				break
 			}
@@ -48,10 +53,10 @@ func (ag *AsymmetricalGenerator) Generate() error {
 		}
 	}
 
-	if ag.Board.IsComplete() {
-		return nil
+	if !ag.Board.IsComplete() {
+		return errors.New("failed to generate a complete puzzle")
 	}
-	return errors.New("failed to generate a complete puzzle")
+	return nil
 }
 
 type Placement struct {
@@ -80,6 +85,9 @@ func (ag *AsymmetricalGenerator) FindPlacementLocations(word string) []Placement
 			tryPlaceWord(x, y, models.Down)   // Try vertical placement
 		}
 	}
+
+	// FIXME: remove debug info
+	fmt.Printf("Placements for %s: %+v\n", word, placements)
 
 	// Logic to find potential placements based on existing words on the board.
 	return placements

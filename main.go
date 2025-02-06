@@ -9,9 +9,11 @@ import (
 
 func main() {
 	// Initialize the board with specific dimensions
+	// TODO: make sure width and height are uneven so (0,0) can be in the centre
 	width, height := 11, 13
 	// Create a word pool with some sample words
-	words := []string{"example", "eagel", "eat", "long", "oxymoron", "car", "house"}
+	words := []string{"example", "eat"}
+	// words := []string{"example", "eagel", "eat", "long", "oxymoron", "car", "house"}
 	// totalWords := 10
 	// center := models.Location{X: width / 2, Y: height / 2} // Center
 
@@ -22,12 +24,15 @@ func main() {
 	// initialize a new pool of words.
 	newPool := models.NewPool()
 	newPool.LoadWords(words)
+	board.Pool = newPool // making sure we can access the pool of words from board struct
 
 	generator := generator.NewAsymmetricalGenerator(board, newPool)
 
 	// Generate the crossword
 	err := generator.Generate()
 	if err != nil {
+		// FIXME: remove debug logging
+		// printBoard(board)
 		fmt.Println("Failed to generate the crossword:", err)
 		return
 	}
@@ -50,5 +55,4 @@ func printBoard(b *models.Board) {
 	}
 }
 
-// DONE: Print empty board
 // TODO: Generate a crossword

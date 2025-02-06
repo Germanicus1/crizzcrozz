@@ -6,8 +6,8 @@ package models
 type Direction int
 
 const (
-	// Across indicates a horizontal placement, from left to right.
+	// Across (0) indicates a horizontal placement, from left to right.
 	Across Direction = iota
-	// Down indicates a vertical placement, from top to bottom.
+	// Down (1) indicates a vertical placement, from top to bottom.
 	Down
 )

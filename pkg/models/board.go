@@ -9,8 +9,10 @@ import (
 type Board struct {
 	Bounds     *Bounds
 	Cells      [][]*Cell
+	WordList   map[string]bool
 	WordCount  int
 	TotalWords int // Total number of words that need to be placed on the board for completion.
+	Pool       *Pool
 }
 
 // NewBoard creates a new board with specified bounds and total words.
@@ -37,6 +39,9 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 	deltaX, deltaY := getDirectionDeltas(direction)
 	intersected := false // To check if at least one letter overlaps with existing words
 
+	// FIXME: Remove debug info
+	// fmt.Printf("CanPlaceWordAt: Testing word %s at start location %+v, in direction %v\n", word, start, direction)
+
 	for i := 0; i < len(word); i++ {
 		x := start.X + i*deltaX
 		y := start.Y + i*deltaY
@@ -51,6 +56,9 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 			intersected = true // Ensure the new word intersects at least once
 		}
 	}
+
+	// FIXME: Remove debug info
+	// fmt.Printf("CanPlaceWordAt.intersected: %v\n", intersected)
 
 	// Ensure the word intersects with existing words on the board
 	return intersected
@@ -87,14 +95,19 @@ func (b *Board) PlaceWordAt(start Location, word string, direction Direction) er
 		x := start.X + i*deltaX
 		y := start.Y + i*deltaY
 
-		// Check if the current position is out of the board's bounds.
-		if y >= len(b.Cells) || x >= len(b.Cells[y]) {
-			return errors.New("placement is out of the board's bounds")
+		// Check if the cell is out of bounds
+		if isOutOfBound(x, y, b) {
+			return errors.New("word placement out of bounds")
 		}
 
-		// Check if the cell is already filled with a different character.
-		if b.Cells[y][x].Filled && b.Cells[y][x].Character != rune(word[i]) {
-			return fmt.Errorf("conflict at position (%d, %d), the cell is already occupied by a different character", x, y)
+		// Check for cell conflicts where a cell is already filled with a different character
+		if isCellConflict(x, y, b, rune(word[i])) {
+			return fmt.Errorf("conflict at position (%d, %d), the cell is occupied by a different character", x, y)
+		}
+
+		// Check for valid parallel placement
+		if !b.isValidParallelPlacement(x, y, deltaX, deltaY) {
+			return fmt.Errorf("invalid parallel word formation at position (%d, %d)", x, y)
 		}
 	}
 
@@ -106,9 +119,83 @@ func (b *Board) PlaceWordAt(start Location, word string, direction Direction) er
 		b.Cells[y][x].Filled = true
 	}
 	b.WordCount++
-	fmt.Println("Words placed:", b.WordCount)
+
+	//FIXME: remove debug info
+	fmt.Printf("Word '%s' placed at (%d, %d) going %s\n", word, start.X, start.Y, directionString(direction))
 
 	return nil
+}
+
+// directionString returns a string representation of a Direction.
+func directionString(direction Direction) string {
+	switch direction {
+	case Across:
+		return "Across"
+	case Down:
+		return "Down"
+	default:
+		return "Unknown Direction"
+	}
+}
+
+func (b *Board) isValidParallelPlacement(x, y, deltaX, deltaY int) bool {
+	// Check perpendicular directions
+	perpendicularDeltaX, perpendicularDeltaY := deltaY, deltaX // Swap deltas for perpendicular check
+	adjacentCells := []Location{
+		{X: x - perpendicularDeltaX, Y: y - perpendicularDeltaY},
+		{X: x + perpendicularDeltaX, Y: y + perpendicularDeltaY},
+	}
+
+	for _, loc := range adjacentCells {
+		if !isOutOfBound(loc.X, loc.Y, b) && b.Cells[loc.Y][loc.X].Filled {
+			// If adjacent cell is filled, ensure it does not form an invalid new word
+			if !b.isPartOfValidWord(loc, perpendicularDeltaX, perpendicularDeltaY) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func (b *Board) isPartOfValidWord(loc Location, deltaX, deltaY int) bool {
+	// Generate potential words in both positive and negative directions
+	word1 := b.generateWordFromLocation(loc, deltaX, deltaY)
+	word2 := b.generateWordFromLocation(loc, -deltaX, -deltaY)
+
+	// Check if either generated word is valid
+	return b.isValidWord(word1, b.Pool) || b.isValidWord(word2, b.Pool)
+}
+
+// generateWordFromLocation generates a word starting from a given location in a specified direction
+func (b *Board) generateWordFromLocation(start Location, deltaX, deltaY int) string {
+	var word []rune
+
+	// Move backwards to the start of the word
+	x, y := start.X, start.Y
+	for b.isValidLocation(x-deltaX, y-deltaY) && b.Cells[y-deltaY][x-deltaX].Filled {
+		x -= deltaX
+		y -= deltaY
+	}
+
+	// Generate the word forward
+	for b.isValidLocation(x, y) && b.Cells[y][x].Filled {
+		x += deltaX
+		y += deltaY
+		word = append(word, b.Cells[y][x].Character)
+	}
+
+	return string(word)
+}
+
+// isValidLocation checks if the given coordinates are within the bounds of the board
+func (b *Board) isValidLocation(x, y int) bool {
+	return x >= 0 && y >= 0 && x < len(b.Cells[0]) && y < len(b.Cells)
+}
+
+// isValidWord checks if the word is in the allowed word list
+func (b *Board) isValidWord(word string, pool *Pool) bool {
+	return pool.Exists(word)
 }
 
 // IsComplete checks if the board is fully set up with all words placed.
