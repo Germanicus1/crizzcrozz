@@ -3,41 +3,44 @@ package main
 import (
 	"fmt"
 
-	generator "github.com/Germanicus1/crizzcrozz/pkg/generators"
+	"github.com/Germanicus1/crizzcrozz/pkg/generators"
 	"github.com/Germanicus1/crizzcrozz/pkg/models"
 )
 
 func main() {
 	// Initialize the board with specific dimensions
 	// TODO: make sure width and height are uneven so (0,0) can be in the centre
-	width, height := 11, 13
-	// Create a word pool with some sample words
-	words := []string{"example", "eat"}
-	// words := []string{"example", "eagel", "eat", "long", "oxymoron", "car", "house"}
-	// totalWords := 10
-	// center := models.Location{X: width / 2, Y: height / 2} // Center
+	width, height := 15, 15
 
 	// Create the board bouindaries for the crosword puzzle
 	bounds, _ := models.NewBoundsRectangle(width, height)
+
+	// Create a word pool with some sample words
+	words := []string{"examples", "eat", "unmoor", "mamma", "house", "stomp", "mustard", "school", "shoe"}
+
 	board := models.NewBoard(bounds, len(words))
 
 	// initialize a new pool of words.
 	newPool := models.NewPool()
 	newPool.LoadWords(words)
-	board.Pool = newPool // making sure we can access the pool of words from board struct
 
-	generator := generator.NewAsymmetricalGenerator(board, newPool)
+	// REM: debug info
+	fmt.Println("newpool.words:", newPool.Words)
+	fmt.Println("newpool.wordSet:", newPool.WordSet)
+	fmt.Println("newpool.ByLength:", newPool.ByLength)
+
+	generator := generators.NewAsymmetricalGenerator(board, newPool)
 
 	// Generate the crossword
 	err := generator.Generate()
+	fmt.Println("wordcount:", board.WordCount)
 	if err != nil {
-		// FIXME: remove debug logging
-		// printBoard(board)
 		fmt.Println("Failed to generate the crossword:", err)
+		printBoard(board)
 		return
 	}
 
-	// FIXME: remove debug logging
+	// REM: printBoard debug info
 	printBoard(board)
 }
 

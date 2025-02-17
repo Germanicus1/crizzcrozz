@@ -29,32 +29,35 @@ func (ag *AsymmetricalGenerator) Generate() error {
 	midRow := ag.Board.Bounds.Height() / 2
 	midCol := (ag.Board.Bounds.Width() - len(firstWord)) / 2
 
+	fmt.Printf("Generate: Attempting to place the first word '%s' at (%d, %d)\n", firstWord, midCol, midRow)
+
 	err := ag.Board.PlaceWordAt(models.Location{X: midCol, Y: midRow}, firstWord, models.Across)
 	if err != nil {
-		return errors.New("failed to place the first word")
+		return errors.New("Generate: Failed to place the first word")
 	}
 
 	// Iterate through the rest of the words.
 	for _, word := range ag.WordPool.Words[1:] {
 		placed := false
 		for _, location := range ag.FindPlacementLocations(word) {
-			// FIXME: remove debug info
-			// fmt.Printf("Location %+v for %s\n", location, word)
-
 			if ag.Board.CanPlaceWordAt(location.Start, word, location.Direction) {
+				// REFACTOR: this is checking a second time if the word can be placed. Why? See CanPlaceWordAt()
 				err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
-				fmt.Println("Error:", err)
+				if err != nil {
+					fmt.Println("Error:", err)
+					break
+				}
 				placed = true
 				break
 			}
 		}
 		if !placed {
-			return errors.New("failed to place a word: " + word)
+			return errors.New("Generate: failed to place a word: " + word)
 		}
 	}
 
 	if !ag.Board.IsComplete() {
-		return errors.New("failed to generate a complete puzzle")
+		return errors.New("Generate: failed to generate a complete puzzle")
 	}
 	return nil
 }
@@ -76,6 +79,7 @@ func (ag *AsymmetricalGenerator) FindPlacementLocations(word string) []Placement
 				Direction: dir,
 			})
 		}
+		// fmt.Printf("%v at x: %v, y: %v going %v\n", word, x, y, directionString(dir))
 	}
 
 	// Iterate over each cell in the board
@@ -86,9 +90,18 @@ func (ag *AsymmetricalGenerator) FindPlacementLocations(word string) []Placement
 		}
 	}
 
-	// FIXME: remove debug info
-	fmt.Printf("Placements for %s: %+v\n", word, placements)
-
-	// Logic to find potential placements based on existing words on the board.
+	// REM: FindPlacementLocations, debug info
+	fmt.Println("placements:", placements)
 	return placements
+}
+
+func directionString(direction models.Direction) string {
+	switch direction {
+	case 0:
+		return "Across"
+	case 1:
+		return "Down"
+	default:
+		return "Unknown Direction"
+	}
 }
