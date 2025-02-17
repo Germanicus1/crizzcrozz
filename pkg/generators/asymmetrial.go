@@ -52,7 +52,8 @@ func (ag *AsymmetricalGenerator) Generate() error {
 			}
 		}
 		if !placed {
-			return errors.New("Generate: failed to place a word: " + word)
+			// return errors.New("Generate: failed to place a word: " + word)
+			fmt.Println("Generate: failed to place a word: ", word)
 		}
 	}
 

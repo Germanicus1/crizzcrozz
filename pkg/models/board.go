@@ -118,17 +118,19 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 	return intersected
 }
 
-func isParallelPlacement(x, y int, deltaX, deltaY int, b *Board) bool {
+func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
 	// Check directly adjacent cells depending on the word's orientation
-	if deltaX == 1 && deltaY == 0 { // Horizontal placement
+	if direction == Across {
 		if isOutOfBound(x, y-1, b) || isOutOfBound(x, y+1, b) {
-			return false
+			return true
 		}
+		// check cell above nd below
 		return !(isCellFilled(x, y-1, b) || isCellFilled(x, y+1, b))
-	} else if deltaX == 0 && deltaY == 1 { // Vertical placement
+	} else if direction == Down {
 		if isOutOfBound(x-1, y, b) || isOutOfBound(x+1, y, b) {
-			return false
+			return true
 		}
+		// check cell left and right.
 		return !(isCellFilled(x-1, y, b) || isCellFilled(x+1, y, b))
 	}
 	return true
