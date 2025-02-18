@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/Germanicus1/crizzcrozz/pkg/generators"
 	"github.com/Germanicus1/crizzcrozz/pkg/models"
@@ -16,7 +17,13 @@ func main() {
 	bounds, _ := models.NewBoundsRectangle(width, height)
 
 	// Create a word pool with some sample words
-	words := []string{"examples", "eat", "unmoor", "mamma", "house", "stomp", "mustard", "school", "shoe"}
+	// words := []string{"examples", "mamma", "eat", "unmoor", "house", "stomp", "mustard", "school", "shoe"}
+
+	words := []string{"bar", "beispiel", "bezahlen", "cent", "zusammen", "stimmt", "eingeladen", "essen", "euro", "gast", "getrennt", "kellner", "kellnerin", "rechnung", "sagen", "trinkgeld", "kosten", "viel", "zahlen", "karte", "getrennt", "zusammen"}
+
+	sort.Slice(words, func(j, i int) bool {
+		return len(words[i]) < len(words[j])
+	})
 
 	board := models.NewBoard(bounds, len(words))
 

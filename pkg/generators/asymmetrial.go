@@ -29,31 +29,25 @@ func (ag *AsymmetricalGenerator) Generate() error {
 	midRow := ag.Board.Bounds.Height() / 2
 	midCol := (ag.Board.Bounds.Width() - len(firstWord)) / 2
 
-	fmt.Printf("Generate: Attempting to place the first word '%s' at (%d, %d)\n", firstWord, midCol, midRow)
-
 	err := ag.Board.PlaceWordAt(models.Location{X: midCol, Y: midRow}, firstWord, models.Across)
 	if err != nil {
-		return errors.New("Generate: Failed to place the first word")
+		return errors.New("failed to place the first word")
 	}
 
-	// Initialize a queue with all the words
-	// TODO: Error handling
-	copy(wordQueue, words)
-	retries := make(map[string]int)
-	maxRetries := 3 // to prevent infinit loops
-
-	for len(wordQueue) > 0 {
-		word:=wordQueue[0]
-		wordQueue :=[1:] // Take the first word off the queue
-
-	}
-
-	wordQueue := make([]string, len(ag.WordPool.Word)1-)
+	// // Initialize a queue with all the words
+	wordQueue := make([]string, len(ag.WordPool.Words)-1)
+	copy(wordQueue, ag.WordPool.Words[1:])
+	maxRetries := 5                 // to prevent infinit loops
+	retries := make(map[string]int) // to keep track of the number oif retries per string
 
 	// Iterate through the rest of the words.
-	for _, word := range ag.WordPool.Words[1:] {
+	for len(wordQueue) > 0 {
+		word := wordQueue[0]
+		wordQueue = wordQueue[1:] // taking of the first word of the list. Will be added again if placement was unsucessful
 		placed := false
-		for _, location := range ag.FindPlacementLocations(word) {
+		placements := ag.FindPlacementLocations(word)
+
+		for _, location := range placements {
 			if ag.Board.CanPlaceWordAt(location.Start, word, location.Direction) {
 				// REFACTOR: this is checking a second time if the word
 				// can be placed. Why? See CanPlaceWordAt()
@@ -66,13 +60,37 @@ func (ag *AsymmetricalGenerator) Generate() error {
 				break
 			}
 		}
+		// for _, word := range ag.WordPool.Words[1:] {
+		// 	placed := false
+		// 	for _, location := range ag.FindPlacementLocations(word) {
+		// 		if ag.Board.CanPlaceWordAt(location.Start, word, location.Direction) {
+		// 			// REFACTOR: this is checking a second time if the word
+		// 			// can be placed. Why? See CanPlaceWordAt()
+		// 			err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
+		// 			if err != nil {
+		// 				fmt.Println("Error:", err)
+		// 				break
+		// 			}
+		// 			placed = true
+		// 			break
+		// 		}
+		// 	}
+
+		fmt.Println("wordQueue: ", wordQueue)
 
 		// TODO: Decide what to do with words that cvould not be placed.
 		// Backtrace?
-		if !placed {
-			// return errors.New("Generate: failed to place a word: " + word)
-			fmt.Println("Generate: failed to place a word: ", word)
+		if !placed && retries[word] <= maxRetries {
+			wordQueue = append(wordQueue, word) // Requeue the word at the end
+			retries[word]++
 		}
+
+		// fmt.Println("Generate: failed to place a word: ", word)
+		// if !placed {
+		// 	// return errors.New("Generate: failed to place a word: " + word)
+		// 	fmt.Println("Generate: failed to place a word: ", word)
+
+		// }
 	}
 
 	if !ag.Board.IsComplete() {
@@ -108,9 +126,6 @@ func (ag *AsymmetricalGenerator) FindPlacementLocations(word string) []Placement
 			tryPlaceWord(x, y, models.Down)   // Try vertical placement
 		}
 	}
-
-	// REM: FindPlacementLocations, debug info
-	fmt.Println("placements:", placements)
 	return placements
 }
 

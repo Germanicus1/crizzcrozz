@@ -47,17 +47,12 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 	intersected := false                            // To check if at least one letter overlaps with existing words
 	intersectionCount := 0
 
-	// REM: CanPlaceWordAt, debug info
-	// fmt.Printf("CanPlaceWordAt: Testing word %s at start location %+v, in direction %v\n", word, start, direction)
-
 	// Calculate the position of the last letter in a word depending on the start and the direction.
 	x := start.X + (len(word)-1)*deltaX
 	y := start.Y + (len(word)-1)*deltaY
 
 	// Check if the word fits on the board
 	if isOutOfBound(x, y, b) {
-		// // REM: isOutOfBound, debug info
-		// fmt.Printf("%v with %v char too long starting at %v going %v\n", word, len(word), start, directionString(direction))
 		return false
 	}
 
@@ -123,6 +118,23 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 	return intersected
 }
 
+// Does the word fit on the bnopard?
+func (b *Board) DoesWordFitOnBoard(start Location, word string, direction Direction) bool {
+	deltaX, deltaY := getDirectionDeltas(direction) // 1,0 = Across 0,1 = Down
+
+	// Calculate the position of the last letter in a word depending on the start and the direction.
+	x := start.X + (len(word)-1)*deltaX
+	y := start.Y + (len(word)-1)*deltaY
+
+	// Check if the last character fits on the board
+	if isOutOfBound(x, y, b) {
+		return false
+	}
+
+	// Ensure the word intersects with existing words on the board
+	return true
+}
+
 func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
 	// Check directly adjacent cells depending on the word's orientation
 	if direction == Across {
@@ -130,7 +142,7 @@ func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
 			return false
 		}
 		// check cell above nd below
-		return !(isCellFilled(x, y-1, b) || isCellFilled(x, y+1, b))
+		return (isCellFilled(x, y-1, b) || isCellFilled(x, y+1, b))
 	} else if direction == Down {
 		if isOutOfBound(x-1, y, b) || isOutOfBound(x+1, y, b) {
 			return false
@@ -155,6 +167,12 @@ func isOutOfBound(x, y int, b *Board) bool {
 	// return x >= len(b.Cells[0]) || x < 0 || y >= len(b.Cells) || y < 0
 	return x < 0 || y < 0 || x >= len(b.Cells[0]) || y >= len(b.Cells)
 }
+
+// // isOutOfBound checks if a cell fits on the board
+// func (b *Board) IsOutOfBound(x, y int, b *Board) bool {
+// 	// return x >= len(b.Cells[0]) || x < 0 || y >= len(b.Cells) || y < 0
+// 	return x < 0 || y < 0 || x >= len(b.Cells[0]) || y >= len(b.Cells)
+// }
 
 // getDirectionDeltas determines the increments (deltaX, deltaY) for x
 // and y based on the direction.
