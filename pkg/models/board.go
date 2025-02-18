@@ -65,6 +65,7 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 	for i := 0; i < len(word); i++ {
 		x := start.X + i*deltaX
 		y := start.Y + i*deltaY
+		isIntersection := false
 
 		// Check if the intersection has different letters
 		if isCellConflict(x, y, b, rune(word[i])) {
@@ -75,16 +76,20 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 		// writing over an existing word)
 		if b.Cells[y][x].Filled && b.Cells[y][x].Character == rune(word[i]) {
 			intersected = true
-			intersectionCount = +1
+			isIntersection = intersected
+			intersectionCount++
 		}
 		if intersectionCount > 1 {
 			return false
 		}
 
-		// Check parallel positions to prevent adjacent parallel words
-		// if isParallelPlacement(x, y, deltaX, deltaY, b) {
-		// 	return false
-		// }
+		// Check parallel positions to prevent adjacent parallel words.
+		// Only on letters which are not valid intersections
+		if !isIntersection {
+			if isParallelPlacement(x, y, direction, b) {
+				return false
+			}
+		}
 
 	}
 
@@ -122,16 +127,16 @@ func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
 	// Check directly adjacent cells depending on the word's orientation
 	if direction == Across {
 		if isOutOfBound(x, y-1, b) || isOutOfBound(x, y+1, b) {
-			return true
+			return false
 		}
 		// check cell above nd below
 		return !(isCellFilled(x, y-1, b) || isCellFilled(x, y+1, b))
 	} else if direction == Down {
 		if isOutOfBound(x-1, y, b) || isOutOfBound(x+1, y, b) {
-			return true
+			return false
 		}
 		// check cell left and right.
-		return !(isCellFilled(x-1, y, b) || isCellFilled(x+1, y, b))
+		return (isCellFilled(x-1, y, b) || isCellFilled(x+1, y, b))
 	}
 	return true
 }

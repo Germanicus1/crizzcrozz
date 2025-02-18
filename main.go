@@ -24,11 +24,6 @@ func main() {
 	newPool := models.NewPool()
 	newPool.LoadWords(words)
 
-	// REM: debug info
-	fmt.Println("newpool.words:", newPool.Words)
-	fmt.Println("newpool.wordSet:", newPool.WordSet)
-	fmt.Println("newpool.ByLength:", newPool.ByLength)
-
 	generator := generators.NewAsymmetricalGenerator(board, newPool)
 
 	// Generate the crossword
@@ -40,7 +35,6 @@ func main() {
 		return
 	}
 
-	// REM: printBoard debug info
 	printBoard(board)
 }
 
