@@ -11,7 +11,7 @@ import (
 func main() {
 	// Initialize the board with specific dimensions
 	// TODO: make sure width and height are uneven so (0,0) can be in the centre
-	width, height := 15, 15
+	width, height := 23, 23
 
 	// Create the board bouindaries for the crosword puzzle
 	bounds, _ := models.NewBoundsRectangle(width, height)
@@ -19,7 +19,7 @@ func main() {
 	// Create a word pool with some sample words
 	// words := []string{"examples", "mamma", "eat", "unmoor", "house", "stomp", "mustard", "school", "shoe"}
 
-	words := []string{"bar", "beispiel", "bezahlen", "cent", "zusammen", "stimmt", "eingeladen", "essen", "euro", "gast", "getrennt", "kellner", "kellnerin", "rechnung", "sagen", "trinkgeld", "kosten", "viel", "zahlen", "karte", "getrennt", "zusammen"}
+	words := []string{"bar", "beispiel", "bezahlen", "cent", "zusammen", "stimmt", "eingeladen", "essen", "euro", "gast", "kellner", "kellnerin", "rechnung", "sagen", "trinkgeld", "kosten", "viel", "zahlen", "karte", "getrennt", "zusammen"}
 
 	sort.Slice(words, func(j, i int) bool {
 		return len(words[i]) < len(words[j])
@@ -59,4 +59,4 @@ func printBoard(b *models.Board) {
 	}
 }
 
-// TODO: Generate a crossword
+// TODO:

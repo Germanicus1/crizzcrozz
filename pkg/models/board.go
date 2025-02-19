@@ -135,23 +135,81 @@ func (b *Board) DoesWordFitOnBoard(start Location, word string, direction Direct
 	return true
 }
 
+// if isOutOfBound(x, y-1, b) is true and direction when Across, we are trying to place a letter at
+// the top of the board.
+
 func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
 	// Check directly adjacent cells depending on the word's orientation
 	if direction == Across {
-		if isOutOfBound(x, y-1, b) || isOutOfBound(x, y+1, b) {
-			return false
+		// Check cell above and below each letter, but only within bounds
+		aboveIsFilled := false
+		belowIsFilled := false
+
+		if !isOutOfBound(x, y-1, b) { // Check above only if it's not out of bounds
+			aboveIsFilled = isCellFilled(x, y-1, b)
 		}
-		// check cell above nd below
-		return (isCellFilled(x, y-1, b) || isCellFilled(x, y+1, b))
+		if !isOutOfBound(x, y+1, b) { // Check below only if it's not out of bounds
+			belowIsFilled = isCellFilled(x, y+1, b)
+		}
+
+		return aboveIsFilled || belowIsFilled
 	} else if direction == Down {
-		if isOutOfBound(x-1, y, b) || isOutOfBound(x+1, y, b) {
-			return false
+		// Check cell left and right of each letter, but only within bounds
+		leftIsFilled := false
+		rightIsFilled := false
+
+		if !isOutOfBound(x-1, y, b) { // Check left only if it's not out of bounds
+			leftIsFilled = isCellFilled(x-1, y, b)
 		}
-		// check cell left and right.
-		return (isCellFilled(x-1, y, b) || isCellFilled(x+1, y, b))
+		if !isOutOfBound(x+1, y, b) { // Check right only if it's not out of bounds
+			rightIsFilled = isCellFilled(x+1, y, b)
+		}
+
+		return leftIsFilled || rightIsFilled
 	}
 	return true
 }
+
+// func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
+// 	// Check directly adjacent cells depending on the word's orientation
+// 	if direction == Across {
+// 		if isOutOfBound(x, y-1, b) || isOutOfBound(x, y+1, b) {
+// 			return false
+// 		}
+// 		// check cell above nd below
+// 		return (isCellFilled(x, y-1, b) || isCellFilled(x, y+1, b))
+// 	} else if direction == Down {
+// 		if isOutOfBound(x-1, y, b) || isOutOfBound(x+1, y, b) {
+// 			return false
+// 		}
+// 		// check cell left and right.
+// 		return (isCellFilled(x-1, y, b) || isCellFilled(x+1, y, b))
+// 	}
+// 	return true
+// }
+
+// func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
+// 	// Check directly adjacent cells depending on the word's orientation
+// 	if direction == Across {
+// 		// trying to place character at the top edge
+// 		if isOutOfBound(x, y-1, b) {
+// 			return isCellFilled(x, y+1, b)
+// 		}
+// 		// trying to place character at the bottom edge
+// 		if isOutOfBound(x, y+1, b) {
+// 			return isCellFilled(x, y-1, b)
+// 		}
+// 	} else if direction == Down {
+// 		// trying to place character at the left edge
+// 		if isOutOfBound(x-1, y, b) {
+// 			return isCellFilled(x+1, y, b)
+// 		}
+// 		if isOutOfBound(x+1, y, b) {
+// 			return isCellFilled(x-1, y, b)
+// 		}
+// 	}
+// 	return true
+// }
 
 // // Helper function to check if a cell is out of bounds or filled
 // func isCellOutOfBoundsOrFilled(x, y int, b *Board) bool {
