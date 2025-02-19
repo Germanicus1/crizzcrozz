@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/Germanicus1/crizzcrozz/pkg/generators"
 	"github.com/Germanicus1/crizzcrozz/pkg/models"
@@ -20,6 +21,10 @@ func main() {
 	// words := []string{"examples", "mamma", "eat", "unmoor", "house", "stomp", "mustard", "school", "shoe"}
 
 	words := []string{"bar", "beispiel", "bezahlen", "cent", "zusammen", "stimmt", "eingeladen", "essen", "euro", "gast", "kellner", "kellnerin", "rechnung", "sagen", "trinkgeld", "kosten", "viel", "zahlen", "karte", "getrennt", "zusammen"}
+
+	for i, word := range words {
+		words[i] = strings.ToUpper(word)
+	}
 
 	sort.Slice(words, func(j, i int) bool {
 		return len(words[i]) < len(words[j])
@@ -58,5 +63,3 @@ func printBoard(b *models.Board) {
 		fmt.Println()
 	}
 }
-
-// TODO:
