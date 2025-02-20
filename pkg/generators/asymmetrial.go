@@ -14,8 +14,7 @@ type AsymmetricalGenerator struct {
 	WordPool       *models.Pool
 }
 
-// TODO-Ak2yMR: Clean up NewAsymmetricalGenerator
-// TODO-0MsCHp: Refactor NewAsymmetricalGenerator
+// TODO-0MsCHp: Refactor Generate()
 
 func NewAsymmetricalGenerator(board *models.Board, pool *models.Pool) *AsymmetricalGenerator {
 	return &AsymmetricalGenerator{
@@ -24,8 +23,7 @@ func NewAsymmetricalGenerator(board *models.Board, pool *models.Pool) *Asymmetri
 	}
 }
 
-// Generate implements the Generate method for generating asymmetrical crossword puzzles.
-func (ag *AsymmetricalGenerator) Generate() error {
+func (ag *AsymmetricalGenerator) placeFirstWord() error {
 	// Place the first word at the center horizontally.
 	firstWord := ag.WordPool.Words[0]
 	midRow := ag.Board.Bounds.Height() / 2
@@ -35,14 +33,25 @@ func (ag *AsymmetricalGenerator) Generate() error {
 	if err != nil {
 		return errors.New("failed to place the first word")
 	}
+	return nil
+}
+
+// Generate implements the Generate method for generating asymmetrical crossword puzzles.
+func (ag *AsymmetricalGenerator) Generate() error {
+
+	err := ag.placeFirstWord()
+	if err != nil {
+		return err
+	}
 
 	// // Initialize a queue with all the words
 	wordQueue := make([]string, len(ag.WordPool.Words)-1)
-	copy(wordQueue, ag.WordPool.Words[1:])
-	maxRetries := 5                 // to prevent infinit loops
-	retries := make(map[string]int) // to keep track of the number oif retries per string
+	copy(wordQueue, ag.WordPool.Words[1:]) // Remove the first word since it is already placed
+	maxRetries := 5                        // prevent infinit loops
+	// TODO-BZHlAt: Make maxRetries a command line argument
+	retries := make(map[string]int) // to keep track of the number of retries per string
 
-	// Iterate through the rest of the words.
+	// Iterate through the words in the queue until maxRetries
 	for len(wordQueue) > 0 {
 		word := wordQueue[0]
 		wordQueue = wordQueue[1:] // taking of the first word of the list. Will be added again if placement was unsucessful
@@ -50,16 +59,13 @@ func (ag *AsymmetricalGenerator) Generate() error {
 		placements := ag.FindPlacementLocations(word)
 
 		for _, location := range placements {
-			if ag.Board.CanPlaceWordAt(location.Start, word, location.Direction) {
-				// FIXME-JM0DEa: this is checking a second time if the word can be placed. Why? See CanPlaceWordAt()
-				err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
-				if err != nil {
-					fmt.Println("Error:", err)
-					break
-				}
-				placed = true
+			err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
+			if err != nil {
+				fmt.Println("Error:", err)
 				break
 			}
+			placed = true
+			break
 		}
 
 		fmt.Println("wordQueue: ", wordQueue)

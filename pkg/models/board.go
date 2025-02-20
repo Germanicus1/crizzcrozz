@@ -90,9 +90,6 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 
 	}
 
-	// // REM: Remove debug info //
-	// fmt.Printf("CanPlaceWordAt.intersected: %v\n", intersected)
-
 	// Are cells before or after occupied? Calculate the position of the
 	// last letter
 	xEnd := start.X + (len(word)-1)*deltaX
@@ -259,28 +256,6 @@ func isCellConflict(x, y int, b *Board, char rune) bool {
 
 func (b *Board) PlaceWordAt(start Location, word string, direction Direction) error {
 	deltaX, deltaY := getDirectionDeltas(direction)
-	// var completeWord []rune
-
-	// Attempt to place the word for i := 0; i < len(word); i++ {
-	//  x := start.X + i*deltaX
-	//  y := start.Y + i*deltaY
-
-	// 	if isOutOfBound(x, y, b) {
-	// 	    fmt.Printf("Out of bounds at (%d, %d)\n", x, y)
-	// 	    return fmt.Errorf("out of bounds at (%d, %d)", x, y)
-	// 	} if isCellConflict(x, y, b, rune(word[i])) {
-	// 	    fmt.Printf("Cell conflict at (%d, %d)\n", x, y)
-	// 	    return fmt.Errorf("cell conflict at (%d, %d)", x, y)
-	// 	} if !b.checkPerpendicularIntersection(start, word, direction) {
-	// 	    fmt.Printf("Invalid intersection at (%d, %d)\n", start.X, start.Y)
-	// 	    return fmt.Errorf("invalid intersection at (%d, %d)", start.X, start.Y)
-	// 	} // // Check for valid parallel placements // if
-	// 	!b.isValidParallelPlacement(x, y, deltaX, deltaY, word) { //
-	// 	return fmt.Errorf("invalid parallel word formation at position
-	// 	(%d, %d)", x, y) // } completeWord = append(completeWord,
-	// 	rune(word[i])) // Build the word being placed
-
-	// }
 
 	// Place the word
 	for i := 0; i < len(word); i++ {
