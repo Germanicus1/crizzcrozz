@@ -1,24 +1,33 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"sort"
 	"strings"
+
+	"flag"
 
 	"github.com/Germanicus1/crizzcrozz/pkg/generators"
 	"github.com/Germanicus1/crizzcrozz/pkg/models"
 )
 
-// TODO-4po_rD: Implement command line arguments
 // TODO-dNww-d: Refactor main.go
+
+//TODO-yUQLxC: Read words from file
 
 func main() {
 	var width int
 	height := 0
 	flag.IntVar(&width, "width", 23, "The width of the board")
 	flag.IntVar(&height, "height", height, "The width of the board")
+	wordList := flag.String("words", "", "A comma separated list of words")
 	flag.Parse()
+
+	words := strings.Split(*wordList, ",")
+
+	for i, v := range words {
+		words[i] = strings.TrimSpace(v)
+	}
 
 	if height == 0 {
 		height = width
@@ -27,10 +36,10 @@ func main() {
 	bounds, _ := models.NewBoundsRectangle(width, height)
 
 	// Create a word pool with some sample words
-	//TODO-EiNHD4: Add words from the command line.
-	//TODO-yUQLxC: Read words from file
 
-	words := []string{"bar", "beispiel", "bezahlen", "cent", "zusammen", "stimmt", "eingeladen", "essen", "euro", "gast", "kellner", "kellnerin", "rechnung", "sagen", "trinkgeld", "kosten", "viel", "zahlen", "karte", "getrennt", "zusammen"}
+	if len(words) == 0 {
+		words = []string{"bar", "beispiel", "bezahlen", "cent", "zusammen", "stimmt", "eingeladen", "essen", "euro", "gast", "kellner", "kellnerin", "rechnung", "sagen", "trinkgeld", "kosten", "viel", "zahlen", "karte", "getrennt", "zusammen"}
+	}
 
 	for i, word := range words {
 		words[i] = strings.ToUpper(word)
