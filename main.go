@@ -9,16 +9,20 @@ import (
 	"github.com/Germanicus1/crizzcrozz/pkg/models"
 )
 
+// TODO-4po_rD: Implement command line arguments
+// TODO-dNww-d: Refactor main.go
+
 func main() {
 	// Initialize the board with specific dimensions
-	// TODO: make sure width and height are uneven so (0,0) can be in the centre
+	// TODO-aC1at0: make sure width and height are uneven so (0,0) can be in the centre
 	width, height := 23, 23
 
 	// Create the board bouindaries for the crosword puzzle
 	bounds, _ := models.NewBoundsRectangle(width, height)
 
 	// Create a word pool with some sample words
-	// words := []string{"examples", "mamma", "eat", "unmoor", "house", "stomp", "mustard", "school", "shoe"}
+	//TODO-EiNHD4: Add words from the command line.
+	//TODO-yUQLxC: Read words from file
 
 	words := []string{"bar", "beispiel", "bezahlen", "cent", "zusammen", "stimmt", "eingeladen", "essen", "euro", "gast", "kellner", "kellnerin", "rechnung", "sagen", "trinkgeld", "kosten", "viel", "zahlen", "karte", "getrennt", "zusammen"}
 

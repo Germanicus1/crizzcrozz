@@ -25,18 +25,9 @@ func NewBaseGenerator(b *models.Board) *BaseGenerator {
 	}
 }
 
-// TODO: Implement a generator
-
-// Generate is a placeholder to satisfy the Generator interface. Specific
-// generator implementations should override this method with actual
-// logic.
+// Generate is a placeholder to satisfy the Generator interface.
+// Specific generator implementations should override this method with
+// actual logic.
 func (bg *BaseGenerator) Generate() error {
 	return errors.New("Generate method not implemented")
-}
-
-// ValidatePlacement checks if a given word can be placed at a starting
-// location in a specified direction.
-func (bg *BaseGenerator) ValidatePlacement(word string, start models.Location, direction models.Direction) bool {
-	// Placeholder for validation logic
-	return true
 }

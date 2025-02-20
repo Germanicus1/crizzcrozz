@@ -14,7 +14,9 @@ type AsymmetricalGenerator struct {
 	WordPool       *models.Pool
 }
 
-// NewAsymmetricalGenerator creates a new generator for asymmetrical puzzles.
+// TODO-Ak2yMR: Clean up NewAsymmetricalGenerator
+// TODO-0MsCHp: Refactor NewAsymmetricalGenerator
+
 func NewAsymmetricalGenerator(board *models.Board, pool *models.Pool) *AsymmetricalGenerator {
 	return &AsymmetricalGenerator{
 		BaseGenerator: NewBaseGenerator(board),
@@ -49,8 +51,7 @@ func (ag *AsymmetricalGenerator) Generate() error {
 
 		for _, location := range placements {
 			if ag.Board.CanPlaceWordAt(location.Start, word, location.Direction) {
-				// REFACTOR: this is checking a second time if the word
-				// can be placed. Why? See CanPlaceWordAt()
+				// FIXME-JM0DEa: this is checking a second time if the word can be placed. Why? See CanPlaceWordAt()
 				err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
 				if err != nil {
 					fmt.Println("Error:", err)
@@ -60,37 +61,15 @@ func (ag *AsymmetricalGenerator) Generate() error {
 				break
 			}
 		}
-		// for _, word := range ag.WordPool.Words[1:] {
-		// 	placed := false
-		// 	for _, location := range ag.FindPlacementLocations(word) {
-		// 		if ag.Board.CanPlaceWordAt(location.Start, word, location.Direction) {
-		// 			// REFACTOR: this is checking a second time if the word
-		// 			// can be placed. Why? See CanPlaceWordAt()
-		// 			err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
-		// 			if err != nil {
-		// 				fmt.Println("Error:", err)
-		// 				break
-		// 			}
-		// 			placed = true
-		// 			break
-		// 		}
-		// 	}
 
 		fmt.Println("wordQueue: ", wordQueue)
 
-		// TODO: Decide what to do with words that cvould not be placed.
+		// TODO-zKYKMy: Decide what to do with words that cvould not be placed.
 		// Backtrace?
 		if !placed && retries[word] <= maxRetries {
-			wordQueue = append(wordQueue, word) // Requeue the word at the end
+			wordQueue = append(wordQueue, word) // Re-queue the word at the end
 			retries[word]++
 		}
-
-		// fmt.Println("Generate: failed to place a word: ", word)
-		// if !placed {
-		// 	// return errors.New("Generate: failed to place a word: " + word)
-		// 	fmt.Println("Generate: failed to place a word: ", word)
-
-		// }
 	}
 
 	if !ag.Board.IsComplete() {
@@ -127,15 +106,4 @@ func (ag *AsymmetricalGenerator) FindPlacementLocations(word string) []Placement
 		}
 	}
 	return placements
-}
-
-func directionString(direction models.Direction) string {
-	switch direction {
-	case 0:
-		return "Across"
-	case 1:
-		return "Down"
-	default:
-		return "Unknown Direction"
-	}
 }
