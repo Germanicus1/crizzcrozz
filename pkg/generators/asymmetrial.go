@@ -14,8 +14,6 @@ type AsymmetricalGenerator struct {
 	WordPool       *models.Pool
 }
 
-// TODO-0MsCHp: Refactor Generate()
-
 func NewAsymmetricalGenerator(board *models.Board, pool *models.Pool) *AsymmetricalGenerator {
 	return &AsymmetricalGenerator{
 		BaseGenerator: NewBaseGenerator(board),

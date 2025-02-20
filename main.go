@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"sort"
 	"strings"
@@ -13,10 +14,15 @@ import (
 // TODO-dNww-d: Refactor main.go
 
 func main() {
-	// Initialize the board with specific dimensions
-	// TODO-aC1at0: make sure width and height are uneven so (0,0) can be in the centre
-	width, height := 23, 23
+	var width int
+	height := 0
+	flag.IntVar(&width, "width", 23, "The width of the board")
+	flag.IntVar(&height, "height", height, "The width of the board")
+	flag.Parse()
 
+	if height == 0 {
+		height = width
+	}
 	// Create the board bouindaries for the crosword puzzle
 	bounds, _ := models.NewBoundsRectangle(width, height)
 
