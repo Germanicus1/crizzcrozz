@@ -39,7 +39,8 @@ func NewBoard(bounds *Bounds, totalWords int) *Board {
 // CanPlaceWordAt checks if a word can be placed at a specific location
 // in a given direction.
 
-// TODO-mIHdG3: Refactor CanPlaceWordAt()
+// TODO-mIHdG3: Refactor CanPlaceWordAt() REFACTOR
+
 func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction) bool {
 	deltaX, deltaY := getDirectionDeltas(direction) // 1,0 = Across 0,1 = Down
 	intersected := false                            // To check if at least one letter overlaps with existing words
@@ -168,54 +169,6 @@ func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
 	return true
 }
 
-// func isParallelPlacement(x, y int, direction Direction, b *Board)
-// bool {
-//  // Check directly adjacent cells depending on the word's orientation
-//  if direction == Across {
-//      if isOutOfBound(x, y-1, b) || isOutOfBound(x, y+1, b) {
-//          return false
-//      }
-//      // check cell above nd below
-//      return (isCellFilled(x, y-1, b) || isCellFilled(x, y+1, b))
-//  } else if direction == Down {
-//      if isOutOfBound(x-1, y, b) || isOutOfBound(x+1, y, b) {
-//          return false
-//      }
-//      // check cell left and right.
-//      return (isCellFilled(x-1, y, b) || isCellFilled(x+1, y, b))
-//  }
-//  return true
-// }
-
-// func isParallelPlacement(x, y int, direction Direction, b *Board)
-// bool {
-//  // Check directly adjacent cells depending on the word's orientation
-//  if direction == Across {
-//      // trying to place character at the top edge
-//      if isOutOfBound(x, y-1, b) {
-//          return isCellFilled(x, y+1, b)
-//      }
-//      // trying to place character at the bottom edge
-//      if isOutOfBound(x, y+1, b) {
-//          return isCellFilled(x, y-1, b)
-//      }
-//  } else if direction == Down {
-//      // trying to place character at the left edge
-//      if isOutOfBound(x-1, y, b) {
-//          return isCellFilled(x+1, y, b)
-//      }
-//      if isOutOfBound(x+1, y, b) {
-//          return isCellFilled(x-1, y, b)
-//      }
-//  }
-//  return true
-// }
-
-// // Helper function to check if a cell is out of bounds or filled func
-// isCellOutOfBoundsOrFilled(x, y int, b *Board) bool {
-//  return x < 0 || x >= len(b.Cells[0]) || y < 0 || y >= len(b.Cells) || b.Cells[y][x].Filled
-// }
-
 func isCellFilled(x, y int, b *Board) bool {
 	return b.Cells[y][x].Filled
 }
@@ -226,12 +179,6 @@ func isOutOfBound(x, y int, b *Board) bool {
 	// 0
 	return x < 0 || y < 0 || x >= len(b.Cells[0]) || y >= len(b.Cells)
 }
-
-// // isOutOfBound checks if a cell fits on the board func (b *Board)
-// IsOutOfBound(x, y int, b *Board) bool {
-//  // return x >= len(b.Cells[0]) || x < 0 || y >= len(b.Cells) || y < 0
-//  return x < 0 || y < 0 || x >= len(b.Cells[0]) || y >= len(b.Cells)
-// }
 
 // getDirectionDeltas determines the increments (deltaX, deltaY) for x
 // and y based on the direction.
@@ -264,7 +211,8 @@ func (b *Board) PlaceWordAt(start Location, word string, direction Direction) er
 	// Record the placed word
 	b.PlacedWords = append(b.PlacedWords, PlacedWord{Start: start, Direction: direction, Word: word})
 	b.WordCount = len(b.PlacedWords)
-	// REM: fmt.Printf("Word '%s' placed at (%d, %d) going %s\n", word, start.X, start.Y, directionString(direction))
+	// REM: fmt.Printf("Word '%s' placed at (%d, %d) going %s\n", word,
+	// start.X, start.Y, directionString(direction))
 
 	return nil
 }
@@ -423,11 +371,6 @@ func (b *Board) generateWordFromLocation(start Location, deltaX, deltaY int) str
 func (b *Board) isValidLocation(x, y int) bool {
 	return x >= 0 && y >= 0 && x < len(b.Cells[0]) && y < len(b.Cells)
 }
-
-// // isValidWord checks if the word is in the allowed word list func (b
-// *Board) isValidWord(word string, pool *Pool) bool {
-//  return pool.Exists(word)
-// }
 
 // IsComplete checks if the board is fully set up with all words placed.
 func (b *Board) IsComplete() bool {

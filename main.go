@@ -15,7 +15,8 @@ import (
 	"github.com/gocarina/gocsv"
 )
 
-// wordsAndHints defines a struct for mapping words and their hints from a CSV file.
+// wordsAndHints defines a struct for mapping words and their hints from
+// a CSV file.
 type wordsAndHints struct {
 	Word string `csv:"word"`
 	Hint string `csv:"hint"`
@@ -37,12 +38,13 @@ func main() {
 		}
 	}
 
-	var words []string // Initializes a slice to store words extracted from wordsAndHints.
+	var words []string
 	for _, v := range wordsAndHints {
-		words = append(words, v.Word) // Populates the words slice with words for the crossword.
+		words = append(words, v.Word)
 	}
 
-	// Sets up the crossword board with the specified dimensions and words.
+	// Sets up the crossword board with the specified dimensions and
+	// words.
 	board, err := setUpBoard(width, height, words)
 	if err != nil {
 		// Check if the error is due to invalid dimensions
@@ -56,22 +58,24 @@ func main() {
 			log.Fatal("Exiting due to unrecoverable error setting up the board.")
 		}
 	}
+
 	// Attempts to generate the crossword puzzle using the board setup.
 	if err := generateCrossword(board, words); err != nil {
 		fmt.Println("Failed to generate the crossword:", err)
 		printBoard(board) // Prints the board even if the puzzle generation fails.
 		return
 	}
-	printBoard(board) // Prints the successfully generated crossword board.
+	printBoard(board)
 }
 
-// printBoard outputs the current state of the crossword board to the console.
-// It marks filled cells with their respective characters and empty cells with a dot.
+// printBoard outputs the current state of the crossword board to the
+// console. It marks filled cells with their respective characters and
+// empty cells with a dot.
 func printBoard(b *models.Board) {
 	for _, row := range b.Cells {
 		for _, cell := range row {
 			if cell.Filled {
-				fmt.Printf("%c ", cell.Character) // Prints the character for filled cells.
+				fmt.Printf("%c ", cell.Character)
 			} else {
 				fmt.Print(". ") // Prints a dot for unfilled cells.
 			}
@@ -96,8 +100,9 @@ func parseFlags() (int, int) {
 	return width, height
 }
 
-// processWordList cleans up and sorts a list of words.
-// It trims whitespace, converts words to uppercase, and sorts by length.
+// processWordList cleans up and sorts a list of words. It trims
+// whitespace, converts words to uppercase, and sorts by length.
+// DEPRECIATED: Will probably not be needed any more.
 func processWordList(wordList string) []string {
 	var words []string
 	if wordList != "" {
@@ -120,8 +125,9 @@ func processWordList(wordList string) []string {
 	return words
 }
 
-// setUpBoard initializes a crossword board with given dimensions and a list of words.
-// It returns a pointer to the created board or an error if the board cannot be created.
+// setUpBoard initializes a crossword board with given dimensions and a
+// list of words. It returns a pointer to the created board or an error
+// if the board cannot be created.
 func setUpBoard(width, height int, words []string) (*models.Board, error) {
 	if width <= 0 || height <= 0 {
 		return nil, fmt.Errorf("invalid board dimensions (width: %d, height: %d)", width, height)
@@ -155,8 +161,9 @@ func generateCrossword(b *models.Board, words []string) error {
 	return nil
 }
 
-// readWordsFromFile reads words and their hints from a specified CSV file.
-// It returns a slice of wordsAndHints structs or an error if the file cannot be read.
+// readWordsFromFile reads words and their hints from a specified CSV
+// file. It returns a slice of wordsAndHints structs or an error if the
+// file cannot be read.
 func readWordsFromFile(fileName string) ([]*wordsAndHints, error) {
 	csvFile, err := os.OpenFile(fileName, os.O_RDWR, os.ModePerm) // Opens the CSV file for reading.
 	if err != nil {
