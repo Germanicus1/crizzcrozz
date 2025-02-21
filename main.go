@@ -21,7 +21,7 @@ type wordsAndHints struct {
 }
 
 func main() {
-	width, height, wordList := parseFlags()
+	width, height := parseFlags()
 	fileName := "vocabulary.csv"
 
 	wordsAndHints, err := readWordsFromFile(fileName)
@@ -33,10 +33,6 @@ func main() {
 	var words []string
 	for _, v := range wordsAndHints {
 		words = append(words, v.Word)
-	}
-
-	if wordList != "" {
-		words = processWordList(wordList)
 	}
 
 	board, err := setUpBoard(width, height, words)
@@ -68,19 +64,17 @@ func printBoard(b *models.Board) {
 	}
 }
 
-func parseFlags() (int, int, string) {
+func parseFlags() (int, int) {
 	var width, height int
-	var wordList string
 	flag.IntVar(&width, "width", 23, "The width of the board")
 	flag.IntVar(&height, "height", 0, "The width of the board")
-	flag.StringVar(&wordList, "words", "", "A comma separated list of words")
 	flag.Parse()
 
 	if height == 0 {
 		height = width
 	}
 
-	return width, height, wordList
+	return width, height
 }
 
 func processWordList(wordList string) []string {
