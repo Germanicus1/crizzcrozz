@@ -1,9 +1,5 @@
 package models
 
-import (
-	"fmt"
-)
-
 type PlacedWord struct {
 	Start     Location
 	Direction Direction
@@ -268,7 +264,7 @@ func (b *Board) PlaceWordAt(start Location, word string, direction Direction) er
 	// Record the placed word
 	b.PlacedWords = append(b.PlacedWords, PlacedWord{Start: start, Direction: direction, Word: word})
 	b.WordCount = len(b.PlacedWords)
-	fmt.Printf("Word '%s' placed at (%d, %d) going %s\n", word, start.X, start.Y, directionString(direction))
+	// REM: fmt.Printf("Word '%s' placed at (%d, %d) going %s\n", word, start.X, start.Y, directionString(direction))
 
 	return nil
 }

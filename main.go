@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -9,22 +10,45 @@ import (
 
 	"github.com/Germanicus1/crizzcrozz/pkg/generators"
 	"github.com/Germanicus1/crizzcrozz/pkg/models"
+	"github.com/gocarina/gocsv"
 )
 
 //TODO-yUQLxC: Read words from file
 
+type wordsAndHints struct {
+	Word string `csv:"word"`
+	Hint string `csv:"hint"`
+}
+
 func main() {
 	width, height, wordList := parseFlags()
-	words := processWordList(wordList)
+	fileName := "vocabulary.csv"
+
+	wordsAndHints, err := readWordsFromFile(fileName)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	var words []string
+	for _, v := range wordsAndHints {
+		words = append(words, v.Word)
+	}
+
+	if wordList != "" {
+		words = processWordList(wordList)
+	}
 
 	board, err := setUpBoard(width, height, words)
 	if err != nil {
 		fmt.Println("Failed to generate the crossword:", err)
+		printBoard(board)
 		return
 	}
 
 	if err := generateCrossword(board, words); err != nil {
 		fmt.Println("Failed to generate the crossword:", err)
+		printBoard(board)
 		return
 	}
 	printBoard(board)
@@ -66,7 +90,7 @@ func processWordList(wordList string) []string {
 		for i, v := range words {
 			words[i] = strings.TrimSpace(v)
 		}
-	} else {
+	} else { // REFACTOR: This is only a fallback
 		words = []string{"bar", "beispiel", "bezahlen", "cent", "zusammen", "stimmt", "eingeladen", "essen", "euro", "gast", "kellner", "kellnerin", "rechnung", "sagen", "trinkgeld", "kosten", "viel", "zahlen", "karte", "getrennt", "zusammen"}
 	}
 
@@ -101,9 +125,23 @@ func generateCrossword(b *models.Board, words []string) error {
 	err := generator.Generate()
 	// fmt.Println("wordcount:", b.WordCount)
 	if err != nil {
-		fmt.Println("Failed to generate the crossword:", err)
-		// printBoard(board)
 		return err
 	}
 	return nil
+}
+
+func readWordsFromFile(fileName string) ([]*wordsAndHints, error) {
+	csvFile, err := os.OpenFile(fileName, os.O_RDWR, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+	defer csvFile.Close()
+
+	var wordsAndHints []*wordsAndHints
+
+	if err := gocsv.UnmarshalFile(csvFile, &wordsAndHints); err != nil {
+		return nil, err
+	}
+
+	return wordsAndHints, nil
 }

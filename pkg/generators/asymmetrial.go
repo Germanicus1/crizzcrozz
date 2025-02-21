@@ -66,8 +66,6 @@ func (ag *AsymmetricalGenerator) Generate() error {
 			break
 		}
 
-		fmt.Println("wordQueue: ", wordQueue)
-
 		// TODO-zKYKMy: Decide what to do with words that cvould not be placed.
 		// Backtrace?
 		if !placed && retries[word] <= maxRetries {
