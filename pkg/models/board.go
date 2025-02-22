@@ -124,9 +124,7 @@ func (b *Board) DoesWordFitOnBoard(start Location, word string, direction Direct
 	y := start.Y + (len(word)-1)*deltaY
 
 	// Check if the last character fits on the board
-	if isOutOfBound(x, y, b) {
-		return false
-	}
+	return !isOutOfBound(x, y, b)
 
 	// Ensure the word intersects with existing words on the board
 	return true
@@ -221,52 +219,52 @@ func (b *Board) PlaceWordAt(start Location, word string, direction Direction) er
 	return nil
 }
 
-func (b *Board) isValidWord(word string) bool {
-	_, exists := b.WordList[word]
-	return exists
-}
+// func (b *Board) isValidWord(word string) bool {
+// 	_, exists := b.WordList[word]
+// 	return exists
+// }
 
-func (b *Board) checkPerpendicularIntersection(newStart Location, word string, newDirection Direction) bool {
-	// If there are no placed words, always allow the placement (needed
-	// for the first word)
-	if len(b.PlacedWords) == 0 {
-		return true
-	}
-	deltaX, deltaY := getDirectionDeltas(newDirection)
-	newEndX := newStart.X + deltaX*(len(word)-1)
-	newEndY := newStart.Y + deltaY*(len(word)-1)
+// func (b *Board) checkPerpendicularIntersection(newStart Location, word string, newDirection Direction) bool {
+// 	// If there are no placed words, always allow the placement (needed
+// 	// for the first word)
+// 	if len(b.PlacedWords) == 0 {
+// 		return true
+// 	}
+// 	deltaX, deltaY := getDirectionDeltas(newDirection)
+// 	newEndX := newStart.X + deltaX*(len(word)-1)
+// 	newEndY := newStart.Y + deltaY*(len(word)-1)
 
-	for _, placed := range b.PlacedWords {
-		placedDeltaX, placedDeltaY := getDirectionDeltas(placed.Direction)
-		placedEndX := placed.Start.X + placedDeltaX*(len(placed.Word)-1)
-		placedEndY := placed.Start.Y + placedDeltaY*(len(placed.Word)-1)
+// 	for _, placed := range b.PlacedWords {
+// 		placedDeltaX, placedDeltaY := getDirectionDeltas(placed.Direction)
+// 		placedEndX := placed.Start.X + placedDeltaX*(len(placed.Word)-1)
+// 		placedEndY := placed.Start.Y + placedDeltaY*(len(placed.Word)-1)
 
-		// Check if directions are perpendicular
-		if (deltaX == 0 && placedDeltaX != 0) || (deltaX != 0 && placedDeltaX == 0) {
-			// Determine if they intersect by checking coordinate ranges
-			if newStart.X <= placedEndX && newEndX >= placed.Start.X &&
-				newStart.Y <= placedEndY && newEndY >= placed.Start.Y {
-				// They intersect and are perpendicular
-				return true
-			}
-		}
-	}
+// 		// Check if directions are perpendicular
+// 		if (deltaX == 0 && placedDeltaX != 0) || (deltaX != 0 && placedDeltaX == 0) {
+// 			// Determine if they intersect by checking coordinate ranges
+// 			if newStart.X <= placedEndX && newEndX >= placed.Start.X &&
+// 				newStart.Y <= placedEndY && newEndY >= placed.Start.Y {
+// 				// They intersect and are perpendicular
+// 				return true
+// 			}
+// 		}
+// 	}
 
-	// No valid perpendicular intersections found
-	return false
-}
+// 	// No valid perpendicular intersections found
+// 	return false
+// }
 
 // directionString returns a string representation of a Direction.
-func directionString(direction Direction) string {
-	switch direction {
-	case Across:
-		return "Across"
-	case Down:
-		return "Down"
-	default:
-		return "Unknown Direction"
-	}
-}
+// func directionString(direction Direction) string {
+// 	switch direction {
+// 	case Across:
+// 		return "Across"
+// 	case Down:
+// 		return "Down"
+// 	default:
+// 		return "Unknown Direction"
+// 	}
+// }
 
 // Consolidated method to check word validity from a location
 // considering all potential word formations
@@ -321,32 +319,32 @@ func directionString(direction Direction) string {
 // 	return string(word)
 // }
 
-func (b *Board) isContinuingWord(x, y, deltaX, deltaY int) bool {
-	// Check in the placement direction from the current cell
-	nextX := x + deltaX
-	nextY := y + deltaY
-	prevX := x - deltaX
-	prevY := y - deltaY
+// func (b *Board) isContinuingWord(x, y, deltaX, deltaY int) bool {
+// 	// Check in the placement direction from the current cell
+// 	nextX := x + deltaX
+// 	nextY := y + deltaY
+// 	prevX := x - deltaX
+// 	prevY := y - deltaY
 
-	return (!isOutOfBound(nextX, nextY, b) && b.Cells[nextY][nextX].Filled) &&
-		(!isOutOfBound(prevX, prevY, b) && b.Cells[prevY][prevX].Filled)
-}
+// 	return (!isOutOfBound(nextX, nextY, b) && b.Cells[nextY][nextX].Filled) &&
+// 		(!isOutOfBound(prevX, prevY, b) && b.Cells[prevY][prevX].Filled)
+// }
 
-func (b *Board) isValidIntersection(x, y, deltaX, deltaY int) bool {
-	// Assumes that a valid intersection must not extend the same word
-	// in both perpendicular directions
-	nextX := x + deltaX
-	nextY := y + deltaY
-	prevX := x - deltaX
-	prevY := y - deltaY
+// func (b *Board) isValidIntersection(x, y, deltaX, deltaY int) bool {
+// 	// Assumes that a valid intersection must not extend the same word
+// 	// in both perpendicular directions
+// 	nextX := x + deltaX
+// 	nextY := y + deltaY
+// 	prevX := x - deltaX
+// 	prevY := y - deltaY
 
-	// Check if the cell is a continuation of a word in the placement
-	// direction or standalone
-	if isOutOfBound(nextX, nextY, b) || isOutOfBound(prevX, prevY, b) || (!b.Cells[nextY][nextX].Filled && !b.Cells[prevY][prevX].Filled) {
-		return true // Valid if it's not extending in the same direction
-	}
-	return false
-}
+// 	// Check if the cell is a continuation of a word in the placement
+// 	// direction or standalone
+// 	if isOutOfBound(nextX, nextY, b) || isOutOfBound(prevX, prevY, b) || (!b.Cells[nextY][nextX].Filled && !b.Cells[prevY][prevX].Filled) {
+// 		return true // Valid if it's not extending in the same direction
+// 	}
+// 	return false
+// }
 
 // generateWordFromLocation generates a word starting from a given
 // location in a specified direction
@@ -372,9 +370,9 @@ func (b *Board) isValidIntersection(x, y, deltaX, deltaY int) bool {
 
 // isValidLocation checks if the given coordinates are within the bounds
 // of the board
-func (b *Board) isValidLocation(x, y int) bool {
-	return x >= 0 && y >= 0 && x < len(b.Cells[0]) && y < len(b.Cells)
-}
+// func (b *Board) isValidLocation(x, y int) bool {
+// 	return x >= 0 && y >= 0 && x < len(b.Cells[0]) && y < len(b.Cells)
+// }
 
 // IsComplete checks if the board is fully set up with all words placed.
 func (b *Board) IsComplete() bool {

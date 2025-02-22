@@ -35,7 +35,7 @@ func (ag *AsymmetricalGenerator) placeFirstWord() error {
 }
 
 // Generate implements the Generate method for generating asymmetrical crossword puzzles.
-func (ag *AsymmetricalGenerator) Generate() error {
+func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
 
 	err := ag.placeFirstWord()
 	if err != nil {
@@ -45,9 +45,7 @@ func (ag *AsymmetricalGenerator) Generate() error {
 	// // Initialize a queue with all the words
 	wordQueue := make([]string, len(ag.WordPool.Words)-1)
 	copy(wordQueue, ag.WordPool.Words[1:]) // Remove the first word since it is already placed
-	maxRetries := 5                        // prevent infinit loops
-	// TODO-BZHlAt: Make maxRetries a command line argument
-	retries := make(map[string]int) // to keep track of the number of retries per string
+	retries := make(map[string]int)        // to keep track of the number of retries per string
 
 	// Iterate through the words in the queue until maxRetries
 	for len(wordQueue) > 0 {

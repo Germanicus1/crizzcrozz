@@ -26,8 +26,7 @@ type wordsAndHints struct {
 var ErrInvalidDimensions = errors.New("invalid board dimensions")
 
 func main() {
-	width, height := parseFlags()
-	fileName := "vocabulary.csv" // Fallback file name FIXME-0DTbqN: The filename needs to come from the command line too
+	width, height, maxRetries, fileName := parseFlags()
 
 	wordsAndHints, err := readWordsFromFile(fileName)
 	if err != nil {
@@ -75,7 +74,7 @@ func main() {
 	fmt.Println("Words to place:", board.TotalWords)
 
 	// Attempts to generate the crossword puzzle using the board setup.
-	if err := generateCrossword(board, words); err != nil {
+	if err := generateCrossword(board, words, maxRetries); err != nil {
 		// REM: debugging
 		fmt.Printf("Words placed: %v\n", board.WordCount)
 		fmt.Println("Failed to generate the crossword:", err)
@@ -104,17 +103,20 @@ func printBoard(b *models.Board) {
 // parseFlags parses the width and height command-line arguments. It
 // returns the parsed dimensions, using width for height if height is
 // not specified. Defaults to a square of 23
-func parseFlags() (int, int) {
-	var width, height int
+func parseFlags() (int, int, int, string) {
+	var width, height, r int
+	var fileName string
 	flag.IntVar(&width, "width", 23, "Specify the width of the board. Default is 23.")
 	flag.IntVar(&height, "height", 0, "Specify the height of the board. Defaults to the value of width if not set.")
+	flag.IntVar(&r, "r", 0, "Specify the number retries to place a word. Default is 3.")
+	flag.StringVar(&fileName, "f", "vocabulary.csv", "Specify the file with the words and hints. Defaults to vocabulary.csv.")
 	flag.Parse()
 
 	if height == 0 {
 		height = width
 	}
 
-	return width, height
+	return width, height, r, fileName
 }
 
 // processWordList cleans up and sorts a list of words. It trims
@@ -162,13 +164,13 @@ func setUpBoard(width, height int, wordCount int) (*models.Board, error) {
 
 // generateCrossword tries to populate the crossword board with words.
 // It returns an error if the crossword generation fails.
-func generateCrossword(b *models.Board, words []string) error {
+func generateCrossword(b *models.Board, words []string, maxRetries int) error {
 	newPool := models.NewPool() // Creates a new pool to hold words.
 	newPool.LoadWords(words)    // Loads words into the pool.
 
 	generator := generators.NewAsymmetricalGenerator(b, newPool) // Initializes a new crossword generator.
 
-	err := generator.Generate() // Attempts to generate the crossword.
+	err := generator.Generate(maxRetries) // Attempts to generate the crossword.
 	if err != nil {
 		return err // Returns an error if generation is unsuccessful.
 	}
