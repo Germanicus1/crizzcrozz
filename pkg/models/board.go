@@ -62,13 +62,13 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 		isIntersection := false
 
 		// Check if the intersection has different letters
-		if isCellConflict(x, y, b, rune(word[i])) {
+		if isCellConflict(x, y, b, string(word[i])) {
 			return false
 		}
 
 		// Ensure the new word intersects once but not more (avoid
 		// writing over an existing word)
-		if b.Cells[y][x].Filled && b.Cells[y][x].Character == rune(word[i]) {
+		if b.Cells[y][x].Filled && b.Cells[y][x].Character == string(word[i]) {
 			intersected = true
 			isIntersection = intersected
 			intersectionCount++
@@ -192,7 +192,7 @@ func getDirectionDeltas(direction Direction) (int, int) {
 // isCellConflict checks if there are any conflicting characters. The
 // conflict tested for is: overlapping character matches the current
 // charater or not. Returns true if conflict
-func isCellConflict(x, y int, b *Board, char rune) bool {
+func isCellConflict(x, y int, b *Board, char string) bool {
 	cell := b.Cells[y][x]
 	return cell.Filled && cell.Character != char
 }
@@ -200,17 +200,21 @@ func isCellConflict(x, y int, b *Board, char rune) bool {
 func (b *Board) PlaceWordAt(start Location, word string, direction Direction) error {
 	deltaX, deltaY := getDirectionDeltas(direction)
 
+	// Convert the word to a slice of runes to handle multi-byte characters properly
+	runes := []rune(word)
+
 	// Place the word
-	for i := 0; i < len(word); i++ {
+	for i, r := range runes {
 		x := start.X + i*deltaX
 		y := start.Y + i*deltaY
-		b.Cells[y][x].Character = rune(word[i])
+		b.Cells[y][x].Character = string(r)
 		b.Cells[y][x].Filled = true
 	}
 
 	// Record the placed word
 	b.PlacedWords = append(b.PlacedWords, PlacedWord{Start: start, Direction: direction, Word: word})
 	b.WordCount = len(b.PlacedWords)
+
 	// REM: fmt.Printf("Word '%s' placed at (%d, %d) going %s\n", word,
 	// start.X, start.Y, directionString(direction))
 
@@ -266,56 +270,56 @@ func directionString(direction Direction) string {
 
 // Consolidated method to check word validity from a location
 // considering all potential word formations
-func (b *Board) isPartOfValidWord(x, y, deltaX, deltaY int) bool {
-	// Check if a word formed starting at this cell in both directions
-	// is valid
-	if checkWordFormed(x, y, deltaX, deltaY, b) || checkWordFormed(x, y, -deltaX, -deltaY, b) {
-		return true
-	}
-	return false
-}
+// func (b *Board) isPartOfValidWord(x, y, deltaX, deltaY int) bool {
+// 	// Check if a word formed starting at this cell in both directions
+// 	// is valid
+// 	if checkWordFormed(x, y, deltaX, deltaY, b) || checkWordFormed(x, y, -deltaX, -deltaY, b) {
+// 		return true
+// 	}
+// 	return false
+// }
 
 // Helper function to generate a word from a start point in a given
 // direction and check its validity
-func checkWordFormed(x, y, deltaX, deltaY int, b *Board) bool {
-	var word []rune
-	// Start at the given point and move in the specified direction
-	for !isOutOfBound(x, y, b) && b.Cells[y][x].Filled {
-		word = append(word, b.Cells[y][x].Character)
-		x += deltaX
-		y += deltaY
-	}
-	// Check if the formed word is in the list of valid words
-	return b.isValidWord(string(word))
-}
+// func checkWordFormed(x, y, deltaX, deltaY int, b *Board) bool {
+// 	var word []rune
+// 	// Start at the given point and move in the specified direction
+// 	for !isOutOfBound(x, y, b) && b.Cells[y][x].Filled {
+// 		word = append(word, b.Cells[y][x].Character)
+// 		x += deltaX
+// 		y += deltaY
+// 	}
+// 	// Check if the formed word is in the list of valid words
+// 	return b.isValidWord(string(word))
+// }
 
-func (b *Board) checkWordValidity(x, y, deltaX, deltaY int) bool {
-	word := b.extractWord(x, y, deltaX, deltaY)
-	_, exists := b.WordList[word] // Assuming b.ValidWords is a map containing valid words
-	return exists
-}
+// func (b *Board) checkWordValidity(x, y, deltaX, deltaY int) bool {
+// 	word := b.extractWord(x, y, deltaX, deltaY)
+// 	_, exists := b.WordList[word] // Assuming b.ValidWords is a map containing valid words
+// 	return exists
+// }
 
-func (b *Board) extractWord(x, y, deltaX, deltaY int) string {
-	var word []rune
+// func (b *Board) extractWord(x, y, deltaX, deltaY int) string {
+// 	var word []rune
 
-	// Extend backward to the start of the word
-	for x >= 0 && x < len(b.Cells[0]) && y >= 0 && y < len(b.Cells) && b.Cells[y][x].Filled {
-		x -= deltaX
-		y -= deltaY
-	}
-	// Move forward one step to the actual start of the word
-	x += deltaX
-	y += deltaY
+// 	// Extend backward to the start of the word
+// 	for x >= 0 && x < len(b.Cells[0]) && y >= 0 && y < len(b.Cells) && b.Cells[y][x].Filled {
+// 		x -= deltaX
+// 		y -= deltaY
+// 	}
+// 	// Move forward one step to the actual start of the word
+// 	x += deltaX
+// 	y += deltaY
 
-	// Now extend forward to extract the whole word
-	for x >= 0 && x < len(b.Cells[0]) && y >= 0 && y < len(b.Cells) && b.Cells[y][x].Filled {
-		word = append(word, b.Cells[y][x].Character)
-		x += deltaX
-		y += deltaY
-	}
+// 	// Now extend forward to extract the whole word
+// 	for x >= 0 && x < len(b.Cells[0]) && y >= 0 && y < len(b.Cells) && b.Cells[y][x].Filled {
+// 		word = append(word, b.Cells[y][x].Character)
+// 		x += deltaX
+// 		y += deltaY
+// 	}
 
-	return string(word)
-}
+// 	return string(word)
+// }
 
 func (b *Board) isContinuingWord(x, y, deltaX, deltaY int) bool {
 	// Check in the placement direction from the current cell
@@ -346,25 +350,25 @@ func (b *Board) isValidIntersection(x, y, deltaX, deltaY int) bool {
 
 // generateWordFromLocation generates a word starting from a given
 // location in a specified direction
-func (b *Board) generateWordFromLocation(start Location, deltaX, deltaY int) string {
-	var word []rune
+// func (b *Board) generateWordFromLocation(start Location, deltaX, deltaY int) string {
+// 	var word []rune
 
-	// Move backwards to the start of the word
-	x, y := start.X, start.Y
-	for b.isValidLocation(x-deltaX, y-deltaY) && b.Cells[y-deltaY][x-deltaX].Filled {
-		x -= deltaX
-		y -= deltaY
-	}
+// 	// Move backwards to the start of the word
+// 	x, y := start.X, start.Y
+// 	for b.isValidLocation(x-deltaX, y-deltaY) && b.Cells[y-deltaY][x-deltaX].Filled {
+// 		x -= deltaX
+// 		y -= deltaY
+// 	}
 
-	// Generate the word forward
-	for b.isValidLocation(x, y) && b.Cells[y][x].Filled {
-		x += deltaX
-		y += deltaY
-		word = append(word, b.Cells[y][x].Character)
-	}
+// 	// Generate the word forward
+// 	for b.isValidLocation(x, y) && b.Cells[y][x].Filled {
+// 		x += deltaX
+// 		y += deltaY
+// 		word = append(word, b.Cells[y][x].Character)
+// 	}
 
-	return string(word)
-}
+// 	return string(word)
+// }
 
 // isValidLocation checks if the given coordinates are within the bounds
 // of the board

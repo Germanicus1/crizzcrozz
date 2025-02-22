@@ -38,14 +38,26 @@ func main() {
 		}
 	}
 
+	//REM: debugging
+	// for _, wh := range wordsAndHints {
+	// 	fmt.Printf("Word: %s, Hint: %s\n", wh.Word, wh.Hint)
+	// }
+
 	var words []string
 	for _, v := range wordsAndHints {
 		words = append(words, v.Word)
 	}
 
+	words = sortWords(words)
+
+	//REM: debugging
+	// for _, v := range words {
+	// 	fmt.Println(v)
+	// }
+
 	// Sets up the crossword board with the specified dimensions and
 	// words.
-	board, err := setUpBoard(width, height, words)
+	board, err := setUpBoard(width, height, len(words))
 	if err != nil {
 		// Check if the error is due to invalid dimensions
 		if errors.Is(err, ErrInvalidDimensions) {
@@ -59,8 +71,13 @@ func main() {
 		}
 	}
 
+	//REM: debugging
+	fmt.Println("Words to place:", board.TotalWords)
+
 	// Attempts to generate the crossword puzzle using the board setup.
 	if err := generateCrossword(board, words); err != nil {
+		// REM: debugging
+		fmt.Printf("Words placed: %v\n", board.WordCount)
 		fmt.Println("Failed to generate the crossword:", err)
 		printBoard(board) // Prints the board even if the puzzle generation fails.
 		return
@@ -75,7 +92,7 @@ func printBoard(b *models.Board) {
 	for _, row := range b.Cells {
 		for _, cell := range row {
 			if cell.Filled {
-				fmt.Printf("%c ", cell.Character)
+				fmt.Printf("%v ", cell.Character)
 			} else {
 				fmt.Print(". ") // Prints a dot for unfilled cells.
 			}
@@ -119,16 +136,13 @@ func processWordList(wordList string) []string {
 		words[i] = strings.ToUpper(word) // Converts all words to uppercase.
 	}
 
-	sort.Slice(words, func(j, i int) bool {
-		return len(words[i]) < len(words[j]) // Sorts words by length.
-	})
 	return words
 }
 
 // setUpBoard initializes a crossword board with given dimensions and a
 // list of words. It returns a pointer to the created board or an error
 // if the board cannot be created.
-func setUpBoard(width, height int, words []string) (*models.Board, error) {
+func setUpBoard(width, height int, wordCount int) (*models.Board, error) {
 	if width <= 0 || height <= 0 {
 		return nil, fmt.Errorf("invalid board dimensions (width: %d, height: %d)", width, height)
 	}
@@ -138,7 +152,7 @@ func setUpBoard(width, height int, words []string) (*models.Board, error) {
 		return nil, fmt.Errorf("failed to create board boundaries: %w", err)
 	}
 
-	board := models.NewBoard(bounds, len(words))
+	board := models.NewBoard(bounds, wordCount)
 	if board == nil {
 		return nil, fmt.Errorf("failed to initialize the crossword board")
 	}
@@ -177,4 +191,11 @@ func readWordsFromFile(fileName string) ([]*wordsAndHints, error) {
 	}
 
 	return wordsAndHints, nil
+}
+
+func sortWords(words []string) []string {
+	sort.Slice(words, func(j, i int) bool {
+		return len(words[i]) < len(words[j]) // Sorts words by length.
+	})
+	return words
 }
