@@ -64,7 +64,7 @@ func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
 			break
 		}
 
-		// TODO-zKYKMy: Decide what to do with words that cvould not be placed.
+		// TODO-zKYKMy: Decide what to do with words that could not be placed.
 		// Backtrace?
 		if !placed && retries[word] <= maxRetries {
 			wordQueue = append(wordQueue, word) // Re-queue the word at the end

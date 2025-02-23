@@ -44,7 +44,8 @@ func main() {
 
 	var words []string
 	for _, v := range wordsAndHints {
-		words = append(words, v.Word)
+		cleanWord := strings.TrimSpace(v.Word)
+		words = append(words, cleanWord)
 	}
 
 	words = sortWords(words)
@@ -108,7 +109,7 @@ func parseFlags() (int, int, int, string) {
 	var fileName string
 	flag.IntVar(&width, "width", 23, "Specify the width of the board. Default is 23.")
 	flag.IntVar(&height, "height", 0, "Specify the height of the board. Defaults to the value of width if not set.")
-	flag.IntVar(&r, "r", 0, "Specify the number retries to place a word. Default is 3.")
+	flag.IntVar(&r, "r", 0, "Specify the number retries to place a word. Default is 0.")
 	flag.StringVar(&fileName, "f", "vocabulary.csv", "Specify the file with the words and hints. Defaults to vocabulary.csv.")
 	flag.Parse()
 
@@ -117,28 +118,6 @@ func parseFlags() (int, int, int, string) {
 	}
 
 	return width, height, r, fileName
-}
-
-// processWordList cleans up and sorts a list of words. It trims
-// whitespace, converts words to uppercase, and sorts by length.
-// DEPRECIATED: Will probably not be needed any more.
-func processWordList(wordList string) []string {
-	var words []string
-	if wordList != "" {
-		words = strings.Split(wordList, ",")
-		for i, v := range words {
-			words[i] = strings.TrimSpace(v) // Trims any surrounding whitespace.
-		}
-	} else {
-		// Fallback word list if none is provided.
-		words = []string{"bar", "beispiel", "bezahlen", "cent", "zusammen", "stimmt", "eingeladen", "essen", "euro", "gast", "kellner", "kellnerin", "rechnung", "sagen", "trinkgeld", "kosten", "viel", "zahlen", "karte", "getrennt", "zusammen"}
-	}
-
-	for i, word := range words {
-		words[i] = strings.ToUpper(word) // Converts all words to uppercase.
-	}
-
-	return words
 }
 
 // setUpBoard initializes a crossword board with given dimensions and a
