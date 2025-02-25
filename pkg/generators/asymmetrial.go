@@ -22,6 +22,10 @@ func NewAsymmetricalGenerator(board *models.Board, pool *models.Pool) *Asymmetri
 }
 
 func (ag *AsymmetricalGenerator) placeFirstWord() error {
+	if ag.Board == nil || len(ag.WordPool.Words) == 0 {
+		return fmt.Errorf("uninitialized board or pool, or empty words list")
+	}
+
 	// Place the first word at the center horizontally.
 	firstWord := ag.WordPool.Words[0]
 	midRow := ag.Board.Bounds.Height() / 2

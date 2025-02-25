@@ -37,11 +37,6 @@ func main() {
 		}
 	}
 
-	//REM: debugging
-	// for _, wh := range wordsAndHints {
-	// 	fmt.Printf("Word: %s, Hint: %s\n", wh.Word, wh.Hint)
-	// }
-
 	var words []string
 	for _, v := range wordsAndHints {
 		cleanWord := strings.TrimSpace(v.Word)
@@ -49,11 +44,6 @@ func main() {
 	}
 
 	words = sortWords(words)
-
-	//REM: debugging
-	// for _, v := range words {
-	// 	fmt.Println(v)
-	// }
 
 	// Sets up the crossword board with the specified dimensions and
 	// words.
@@ -70,9 +60,6 @@ func main() {
 			log.Fatal("Exiting due to unrecoverable error setting up the board.")
 		}
 	}
-
-	//REM: debugging
-	fmt.Println("Words to place:", board.TotalWords)
 
 	// Attempts to generate the crossword puzzle using the board setup.
 	if err := generateCrossword(board, words, maxRetries); err != nil {
