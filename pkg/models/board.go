@@ -18,7 +18,7 @@ type Board struct {
 	Cells       [][]*Cell
 	WordList    map[string]bool
 	WordCount   int
-	TotalWords  int // Total number of words that need to be placed on the board for completion.
+	TotalWords  int // Total number of words that need to be placed on the board.
 	Pool        *Pool
 }
 
@@ -67,9 +67,7 @@ func (b *Board) Save() error {
 //	word - The word to be placed.
 //	direction - The direction to place the word (e.g., horizontal or vertical).
 //
-// Returns:
-//
-//	true if the word can be placed according to the rules of the game; false otherwise.
+// Reports wether the word can be placed according to the rules of the game
 func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction) bool {
 	deltaX, deltaY := getDirectionDeltas(direction) // Get the direction deltas to determine how to increment the position.
 	intersected := false                            // Flag to track if the word intersects at least once with existing words.
@@ -131,19 +129,12 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 // calculates the position based on the starting location, the length of the
 // word, and the direction in which the word is placed. Parameters:
 //
-// start - The starting location (x, y) for placing the word.
+//	start- The starting location (x, y) for placing the word.
+//	word - The word to be placed.
+//	deltaX  - The horizontal direction increment (1 for rightward, -1 for leftward, 0 for none.)
+//	deltaY  - The vertical direction increment (1 for downward, -1 for upward, 0 for none).
 //
-// word - The word to be placed.
-//
-// deltaX - The horizontal direction increment (1 for rightward, -1 for
-// leftward, 0 for none.)
-//
-// deltaY - The vertical direction increment (1 for downward, -1 for upward, 0
-// for noåne).
-//
-// Returns:
-//
-//	true if the last character of the word fits within the board boundaries; false otherwise.
+// Reports wether the last character of the word fits within the board boundaries.
 func (b *Board) isPlacementWithinBounds(start Location, word string, deltaX, deltaY int) bool {
 	// Calculate the coordinates of the last letter in the word based on the
 	// initial position, the length of the word, and the direction of placement
@@ -161,16 +152,16 @@ func (b *Board) isPlacementWithinBounds(start Location, word string, deltaX, del
 // isParallelPlacement checks if there are already filled cells directly
 // adjacent to a given cell in the board depending on the orientation of the
 // word being placed. This function is used to prevent adjacent parallel words
-// from touching each other.
+// from touching each other. Parameters:
 //
-// Parameters: x, y - The coordinates of the cell to check.
+// x, y - The coordinates of the cell to check.
 //
 // direction - The orientation of the word being placed (Across or Down).
 //
 // b - A pointer to the Board structure on which the word is being placed.
 //
-// Returns: true if there are filled cells adjacent to the specified cell in the
-// specified direction, false otherwise.
+// Reports wether there are filled cells adjacent to the specified cell in the
+// specified direction.
 func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
 	// Check directly adjacent cells depending on the word's orientation
 	if direction == Across {
