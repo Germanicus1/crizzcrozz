@@ -1,5 +1,10 @@
 package models
 
+import (
+	"encoding/json"
+	"os"
+)
+
 type PlacedWord struct {
 	Start     Location
 	Direction Direction
@@ -34,6 +39,19 @@ func NewBoard(bounds *Bounds, totalWords int) *Board {
 		TotalWords: totalWords,
 		WordCount:  0,
 	}
+}
+
+func (b *Board) Save() error {
+	data, err := json.Marshal(b)
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.WriteFile("board.json", data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // CanPlaceWordAt determines if a word can be legally placed on the board at a specified location and direction.

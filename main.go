@@ -67,7 +67,15 @@ func main() {
 		fmt.Printf("Words placed: %v\n", board.WordCount)
 		fmt.Println("Failed to generate the crossword:", err)
 		printBoard(board) // Prints the board even if the puzzle generation fails.
+		err = board.Save()
+		if err != nil {
+			fmt.Println(err)
+		}
 		return
+	}
+	err = board.Save()
+	if err != nil {
+		fmt.Println(err)
 	}
 	printBoard(board)
 }
