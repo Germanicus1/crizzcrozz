@@ -64,14 +64,8 @@ func main() {
 	// Attempts to generate the crossword puzzle using the board setup.
 	if err := generateCrossword(board, words, maxRetries); err != nil {
 		// REM: debugging
-		fmt.Printf("Words placed: %v\n", board.WordCount)
-		fmt.Println("Failed to generate the crossword:", err)
-		printBoard(board) // Prints the board even if the puzzle generation fails.
-		err = board.Save()
-		if err != nil {
-			fmt.Println(err)
-		}
-		return
+		fmt.Printf("Words placed: %v (%v)\n", board.WordCount, board.TotalWords)
+		fmt.Println(err)
 	}
 	err = board.Save()
 	if err != nil {
