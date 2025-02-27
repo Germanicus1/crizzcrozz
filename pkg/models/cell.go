@@ -2,10 +2,11 @@ package models
 
 // Cell represents a single square on the crossword puzzle board.
 type Cell struct {
-	Character string // The character contained in the cell, if any.
-	Filled    bool   // Indicates whether the cell is filled with a character.
-	Hint      string // An optional hint associated with this cell.
-	Locked    bool   // Indicates whether the cell is locked from being changed.
+	Character  string // The character contained in the cell, if any.
+	Filled     bool   // Indicates whether the cell is filled with a character.
+	Hint       string // An optional hint associated with this cell.
+	Locked     bool   // Indicates whether the cell is locked from being changed.
+	UsageCount int    // >1 means it is a intersection. Used for recursion (removal)
 }
 
 // NewCell creates a new cell. If a character is provided, the cell is

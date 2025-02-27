@@ -295,13 +295,12 @@ func (b *Board) PlaceWordAt(start Location, word string, direction Direction) er
 
 	// Iterate over each rune in the slice, placing each character on the board.
 	for i, r := range runes {
-		x := start.X + i*deltaX // Calculate the x-coordinate for the character based on its position in the word.
-		y := start.Y + i*deltaY // Calculate the y-coordinate for the character based on its position in the word.
-
-		// Place the character in the specified cell and mark the cell as
-		// filled.
-		b.Cells[y][x].Character = string(r)
-		b.Cells[y][x].Filled = true
+		x := start.X + i*deltaX
+		y := start.Y + i*deltaY
+		cell := b.Cells[x][y]
+		cell.Character = string(r)
+		cell.Filled = true
+		cell.UsageCount++
 	}
 
 	// Record the action of placing the word by appending a new PlacedWord
@@ -310,7 +309,7 @@ func (b *Board) PlaceWordAt(start Location, word string, direction Direction) er
 	b.PlacedWords = append(b.PlacedWords, PlacedWord{Start: start, Direction: direction, Word: word})
 
 	// Update the total count of words placed on the board.
-	b.WordCount = len(b.PlacedWords)
+	b.WordCount++
 
 	// Return nil to indicate successful placement. In a real application, error
 	// handling could be added to deal with situations where the word cannot be
