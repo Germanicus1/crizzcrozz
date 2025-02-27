@@ -17,7 +17,8 @@ func NewPool() *Pool {
 
 func (p *Pool) LoadWords(words []string) {
 	for _, word := range words {
-		length := len(word)
+		runes := []rune(word)
+		length := len(runes)
 		p.Words = append(p.Words, word)
 		p.ByLength[length] = append(p.ByLength[length], word)
 		p.WordSet[word] = true // Add the word to the set for quick validation

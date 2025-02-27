@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -57,6 +58,37 @@ func (b *Board) Save() error {
 	return nil
 }
 
+func (b *Board) Load(fileName string) (*Board, error) {
+	fileExists, err := fileExists(fileName)
+
+	if !fileExists {
+		return nil, err
+	}
+
+	data, err := os.ReadFile("board.json")
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, b)
+	if err != nil {
+		return nil, err
+	}
+	// REM: Debug info
+	fmt.Println("Loaded existing board config")
+	return b, nil
+}
+
+func fileExists(filename string) (bool, error) {
+	_, err := os.Stat(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
 // CanPlaceWordAt determines if a word can be legally placed on the board at a
 // specified location and direction. It checks that the word does not overflow
 // the board, does not conflict with existing letters, intersects correctly with
@@ -72,28 +104,29 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 	deltaX, deltaY := getDirectionDeltas(direction) // Get the direction deltas to determine how to increment the position.
 	intersected := false                            // Flag to track if the word intersects at least once with existing words.
 	intersectionCount := 0                          // Counter for the number of intersections with existing words.
+	runes := []rune(word)                           // Convert the word to runes for correct multiubyte letter handling
 
 	// Check if the placement of the entire word would be within the board's
 	// bounds.
-	if !b.isPlacementWithinBounds(start, word, deltaX, deltaY) {
+	if !b.isPlacementWithinBounds(start, runes, deltaX, deltaY) {
 		return false
 	}
 
 	// Loop through each character in the word to check placement rules.
-	for i := 0; i < len(word); i++ {
-		x := start.X + i*deltaX // Calculate x position of the current character.
-		y := start.Y + i*deltaY // Calculate y position of the current character.
+	for i := 0; i < len(runes); i++ {
+		x := start.X + i*deltaX // Calculate x coordinate of the current character.
+		y := start.Y + i*deltaY // Calculate y coordinate of the current character.
 		isIntersection := false // Local flag to check if the current character intersects with a filled cell.
 
 		// Check if placing the current character causes a conflict with
 		// different letters already placed.
-		if isCellConflict(x, y, b, string(word[i])) {
+		if isCellConflict(x, y, b, string(runes[i])) {
 			return false
 		}
 
 		// Check if the current placement intersects correctly without
 		// overlapping incorrectly.
-		if b.Cells[y][x].Filled && b.Cells[y][x].Character == string(word[i]) {
+		if b.Cells[y][x].Filled && b.Cells[y][x].Character == string(runes[i]) {
 			intersected = true
 			isIntersection = true
 			intersectionCount++
@@ -113,7 +146,7 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 	// Check if cells immediately before and after the word are unoccupied to
 	// prevent contiguous word formation.
 	xBefore, yBefore := start.X-deltaX, start.Y-deltaY
-	xAfter, yAfter := start.X+len(word)*deltaX, start.Y+len(word)*deltaY
+	xAfter, yAfter := start.X+len(runes)*deltaX, start.Y+len(runes)*deltaY
 
 	if isOutOfBound(xBefore, yBefore, b) || isCellFilled(xBefore, yBefore, b) || isOutOfBound(xAfter, yAfter, b) || isCellFilled(xAfter, yAfter, b) {
 		return false
@@ -135,13 +168,13 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 //	deltaY  - The vertical direction increment (1 for downward, -1 for upward, 0 for none).
 //
 // Reports wether the last character of the word fits within the board boundaries.
-func (b *Board) isPlacementWithinBounds(start Location, word string, deltaX, deltaY int) bool {
+func (b *Board) isPlacementWithinBounds(start Location, runes []rune, deltaX, deltaY int) bool {
 	// Calculate the coordinates of the last letter in the word based on the
 	// initial position, the length of the word, and the direction of placement
 	// (deltaX, deltaY). The '-1' in the calculation accounts for the zero-based
 	// index of the first character at the start position.
-	x := start.X + (len(word)-1)*deltaX
-	y := start.Y + (len(word)-1)*deltaY
+	x := start.X + (len(runes)-1)*deltaX
+	y := start.Y + (len(runes)-1)*deltaY
 
 	// Return the negation of isOutOfBound to check if the calculated position
 	// of the last letter is within the board. isOutOfBound typically returns
