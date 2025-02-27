@@ -82,6 +82,9 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	// BUG: "schön" is placed perpendicular to schinken; the b of schön should
+	// intersect with the end n of schinken but it doesn´t intersect.
+
 	printBoard(board)
 }
 

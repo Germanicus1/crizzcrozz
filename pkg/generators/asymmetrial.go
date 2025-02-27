@@ -89,6 +89,8 @@ func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
 			break
 		}
 
+		// TODO-zKYKMy: Decide what to do with words that could not be placed.
+		// Backtrace?
 		if !placed && retries[word] <= maxRetries {
 			wordQueue = append(wordQueue, word) // Re-queue the word at the end
 			retries[word]++
@@ -109,6 +111,26 @@ type Placement struct {
 // FindPlacementLocations generates a list of possible placement locations for a word.
 func (ag *AsymmetricalGenerator) FindPlacementLocations(word string) []Placement {
 	var placements []Placement
+
+	// for y := 0; y < len(ag.Board.Cells); y++ {
+	// 	for x := 0; x < len(ag.Board.Cells[y]); x++ {
+	// 		if x == 8 && y == 15 && word == "schön" {
+	// 			// Now set a breakpoint on the next line
+	// 			if ag.Board.CanPlaceWordAt(models.Location{X: x, Y: y}, word, models.Across) {
+	// 				placements = append(placements, Placement{
+	// 					Start:     models.Location{X: x, Y: y},
+	// 					Direction: models.Across,
+	// 				})
+	// 			}
+	// 			if ag.Board.CanPlaceWordAt(models.Location{X: x, Y: y}, word, models.Down) {
+	// 				placements = append(placements, Placement{
+	// 					Start:     models.Location{X: x, Y: y},
+	// 					Direction: models.Down,
+	// 				})
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	// Helper function to try placing a word in one direction
 	tryPlaceWord := func(x, y int, dir models.Direction) {
