@@ -27,6 +27,8 @@ var ErrInvalidDimensions = errors.New("invalid board dimensions")
 
 func main() {
 	width, height, maxRetries, fileName := parseFlags()
+	// REM
+	fileName = "vocabulary.csv"
 
 	wordsAndHints, err := readWordsFromFile(fileName)
 	if err != nil {
