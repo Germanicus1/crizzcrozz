@@ -28,9 +28,6 @@ var ErrInvalidDimensions = errors.New("invalid board dimensions")
 func main() {
 	width, height, maxRetries, fileName, boardConfig := parseFlags()
 
-	// REM: For debugging only
-	fileName = "vocabulary.csv"
-
 	// boardCongig is the name of the JSON file that contains an earlier saved
 	// board complete witgh its state.
 	if boardConfig != "" {
@@ -82,9 +79,6 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	// BUG: "schön" is placed perpendicular to schinken; the b of schön should
-	// intersect with the end n of schinken but it doesn´t intersect.
-
 	printBoard(board)
 }
 
