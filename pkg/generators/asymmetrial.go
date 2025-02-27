@@ -38,68 +38,68 @@ func (ag *AsymmetricalGenerator) placeFirstWord() error {
 	return nil
 }
 
-func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
-	return ag.placeWordsRecursive(0, maxRetries)
-}
+// func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
+// 	return ag.placeWordsRecursive(0, maxRetries)
+// }
 
-func (ag *AsymmetricalGenerator) placeWordsRecursive(index, maxRetries int) error {
-	if index == len(ag.WordPool.Words) {
-		return nil
-	}
-	word := ag.WordPool.Words[index]
-	placements := ag.FindPlacementLocations(word)
+// func (ag *AsymmetricalGenerator) placeWordsRecursive(index, maxRetries int) error {
+// 	if index == len(ag.WordPool.Words) {
+// 		return nil
+// 	}
+// 	word := ag.WordPool.Words[index]
+// 	placements := ag.FindPlacementLocations(word)
 
-	for _, location := range placements {
-		if err := ag.Board.PlaceWordAt(location.Start, word, location.Direction); err == nil {
-			if err := ag.placeWordsRecursive(index+1, maxRetries); err == nil {
-				return nil // word placed sucessfully
-			}
-		}
-	}
-	return fmt.Errorf("failed to place word: %s", word)
-}
+// 	for _, location := range placements {
+// 		if err := ag.Board.PlaceWordAt(location.Start, word, location.Direction); err == nil {
+// 			if err := ag.placeWordsRecursive(index+1, maxRetries); err == nil {
+// 				return nil // word placed sucessfully
+// 			}
+// 		}
+// 	}
+// 	return fmt.Errorf("failed to place word: %s", word)
+// }
 
 // Generate implements the Generate method for generating asymmetrical crossword puzzles.
-// func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
+func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
 
-// 	err := ag.placeFirstWord()
-// 	if err != nil {
-// 		return err
-// 	}
+	err := ag.placeFirstWord()
+	if err != nil {
+		return err
+	}
 
-// 	// // Initialize a queue with all the words
-// 	wordQueue := make([]string, len(ag.WordPool.Words)-1)
-// 	copy(wordQueue, ag.WordPool.Words[1:]) // Remove the first word since it is already placed
-// 	retries := make(map[string]int)        // to keep track of the number of retries per string
+	// // Initialize a queue with all the words
+	wordQueue := make([]string, len(ag.WordPool.Words)-1)
+	copy(wordQueue, ag.WordPool.Words[1:]) // Remove the first word since it is already placed
+	retries := make(map[string]int)        // to keep track of the number of retries per string
 
-// 	// Iterate through the words in the queue until maxRetries
-// 	for len(wordQueue) > 0 {
-// 		word := wordQueue[0]
-// 		wordQueue = wordQueue[1:] // taking of the first word of the list. Will be added again if placement was unsucessful
-// 		placed := false
-// 		placements := ag.FindPlacementLocations(word)
+	// Iterate through the words in the queue until maxRetries
+	for len(wordQueue) > 0 {
+		word := wordQueue[0]
+		wordQueue = wordQueue[1:] // taking of the first word of the list. Will be added again if placement was unsucessful
+		placed := false
+		placements := ag.FindPlacementLocations(word)
 
-// 		for _, location := range placements {
-// 			err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
-// 			if err != nil {
-// 				fmt.Println("Error:", err)
-// 				break
-// 			}
-// 			placed = true
-// 			break
-// 		}
+		for _, location := range placements {
+			err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
+			if err != nil {
+				fmt.Println("Error:", err)
+				break
+			}
+			placed = true
+			break
+		}
 
-// 		if !placed && retries[word] <= maxRetries {
-// 			wordQueue = append(wordQueue, word) // Re-queue the word at the end
-// 			retries[word]++
-// 		}
-// 	}
+		if !placed && retries[word] <= maxRetries {
+			wordQueue = append(wordQueue, word) // Re-queue the word at the end
+			retries[word]++
+		}
+	}
 
-// 	if !ag.Board.IsComplete() {
-// 		return errors.New("Generate: failed to generate a complete puzzle")
-// 	}
-// 	return nil
-// }
+	if !ag.Board.IsComplete() {
+		return errors.New("Generate: failed to generate a complete puzzle")
+	}
+	return nil
+}
 
 type Placement struct {
 	Start     models.Location
