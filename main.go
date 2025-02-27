@@ -28,7 +28,7 @@ var ErrInvalidDimensions = errors.New("invalid board dimensions")
 func main() {
 	width, height, maxRetries, fileName, boardConfig := parseFlags()
 
-	// REM
+	// REM: For debugging only
 	fileName = "vocabulary.csv"
 
 	// boardCongig is the name of the JSON file that contains an earlier saved
