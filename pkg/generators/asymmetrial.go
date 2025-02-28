@@ -21,6 +21,8 @@ func NewAsymmetricalGenerator(board *models.Board, pool *models.Pool) *Asymmetri
 	}
 }
 
+// TODO: Back-tracking
+
 func (ag *AsymmetricalGenerator) placeFirstWord() error {
 	if ag.Board == nil || len(ag.WordPool.Words) == 0 {
 		return fmt.Errorf("uninitialized board or pool, or empty words list")
@@ -29,18 +31,18 @@ func (ag *AsymmetricalGenerator) placeFirstWord() error {
 	// Place the first word at the center horizontally.
 	firstWord := ag.WordPool.Words[0]
 	midRow := ag.Board.Bounds.Height() / 2
-	midCol := (ag.Board.Bounds.Width() - len(firstWord)) / 2
+	startCol := (ag.Board.Bounds.Width() - len(firstWord)) / 2
 
-	err := ag.Board.PlaceWordAt(models.Location{X: midCol, Y: midRow}, firstWord, models.Across)
+	err := ag.Board.PlaceWordAt(models.Location{X: startCol, Y: midRow}, firstWord, models.Across)
 	if err != nil {
 		return errors.New("failed to place the first word")
 	}
 	return nil
 }
 
-func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
-	return ag.placeWordsRecursive(0, maxRetries)
-}
+// func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
+// 	return ag.placeWordsRecursive(0, maxRetries)
+// }
 
 func (ag *AsymmetricalGenerator) placeWordsRecursive(index, maxRetries int) error {
 	if index == len(ag.WordPool.Words) {
@@ -60,46 +62,46 @@ func (ag *AsymmetricalGenerator) placeWordsRecursive(index, maxRetries int) erro
 }
 
 // Generate implements the Generate method for generating asymmetrical crossword puzzles.
-// func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
+func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
 
-// 	err := ag.placeFirstWord()
-// 	if err != nil {
-// 		return err
-// 	}
+	err := ag.placeFirstWord()
+	if err != nil {
+		return err
+	}
 
-// 	// // Initialize a queue with all the words
-// 	wordQueue := make([]string, len(ag.WordPool.Words)-1)
-// 	copy(wordQueue, ag.WordPool.Words[1:]) // Remove the first word since it is already placed
-// 	retries := make(map[string]int)        // to keep track of the number of retries per string
+	// // Initialize a queue with all the words
+	wordQueue := make([]string, len(ag.WordPool.Words)-1)
+	copy(wordQueue, ag.WordPool.Words[1:]) // Remove the first word since it is already placed
+	retries := make(map[string]int)        // to keep track of the number of retries per string
 
-// 	// Iterate through the words in the queue until maxRetries
-// 	for len(wordQueue) > 0 {
-// 		word := wordQueue[0]
-// 		wordQueue = wordQueue[1:] // taking of the first word of the list. Will be added again if placement was unsucessful
-// 		placed := false
-// 		placements := ag.FindPlacementLocations(word)
+	// Iterate through the words in the queue until maxRetries
+	for len(wordQueue) > 0 {
+		word := wordQueue[0]
+		wordQueue = wordQueue[1:] // taking of the first word of the list. Will be added again if placement was unsucessful
+		placed := false
+		placements := ag.FindPlacementLocations(word)
 
-// 		for _, location := range placements {
-// 			err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
-// 			if err != nil {
-// 				fmt.Println("Error:", err)
-// 				break
-// 			}
-// 			placed = true
-// 			break
-// 		}
+		for _, location := range placements {
+			err := ag.Board.PlaceWordAt(location.Start, word, location.Direction)
+			if err != nil {
+				fmt.Println("Error:", err)
+				break
+			}
+			placed = true
+			break
+		}
 
-// 		if !placed && retries[word] <= maxRetries {
-// 			wordQueue = append(wordQueue, word) // Re-queue the word at the end
-// 			retries[word]++
-// 		}
-// 	}
+		if !placed && retries[word] <= maxRetries {
+			wordQueue = append(wordQueue, word) // Re-queue the word at the end
+			retries[word]++
+		}
+	}
 
-// 	if !ag.Board.IsComplete() {
-// 		return errors.New("Generate: failed to generate a complete puzzle")
-// 	}
-// 	return nil
-// }
+	if !ag.Board.IsComplete() {
+		return errors.New("Generate: failed to generate a complete puzzle")
+	}
+	return nil
+}
 
 type Placement struct {
 	Start     models.Location

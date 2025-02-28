@@ -13,11 +13,13 @@ type Cell struct {
 // marked as filled.
 func NewCell(char string, hint string, locked bool) *Cell {
 	filled := char != "" // Assuming rune(0) means no character.
+	usageCount := 0
 	return &Cell{
-		Character: char,
-		Filled:    filled,
-		Hint:      hint,
-		Locked:    locked,
+		Character:  char,
+		Filled:     filled,
+		Hint:       hint,
+		Locked:     locked,
+		UsageCount: usageCount,
 	}
 }
 

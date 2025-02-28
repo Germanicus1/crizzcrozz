@@ -28,7 +28,7 @@ var ErrInvalidDimensions = errors.New("invalid board dimensions")
 func main() {
 	width, height, maxRetries, fileName := parseFlags()
 	// REM
-	fileName = "vocabulary.csv"
+	// fileName = "vocabulary.csv"
 
 	wordsAndHints, err := readWordsFromFile(fileName)
 	if err != nil {
@@ -39,13 +39,15 @@ func main() {
 		}
 	}
 
+	fmt.Printf("Read %d words and hints from the file.\n", len(wordsAndHints))
+
 	var words []string
 	for _, v := range wordsAndHints {
 		cleanWord := strings.TrimSpace(v.Word)
 		words = append(words, cleanWord)
 	}
 
-	words = sortWords(words)
+	words = sortWordsByLength(words)
 
 	// Sets up the crossword board with the specified dimensions and
 	// words.
@@ -161,11 +163,12 @@ func readWordsFromFile(fileName string) ([]*wordsAndHints, error) {
 	if err := gocsv.UnmarshalFile(csvFile, &wordsAndHints); err != nil {
 		return nil, err // Returns an error if the CSV data cannot be parsed.
 	}
+	fmt.Printf("Successfully unmarshalled %d words and hints.\n", len(wordsAndHints))
 
 	return wordsAndHints, nil
 }
 
-func sortWords(words []string) []string {
+func sortWordsByLength(words []string) []string {
 	sort.Slice(words, func(j, i int) bool {
 		return len(words[i]) < len(words[j]) // Sorts words by length.
 	})
