@@ -236,9 +236,7 @@ func isCellConflict(x, y int, b *Board, char string) bool {
 
 // PlaceWordAt places a word on the board at a specified location and in a given
 // direction. It updates the board's cells to include the new word and records
-// this action in the board's history of placed words.
-//
-// Parameters:
+// this action in the board's history of placed words. Parameters:
 //
 // start - The starting location (x, y) where the first character of the word
 // will be placed.
@@ -247,10 +245,8 @@ func isCellConflict(x, y int, b *Board, char string) bool {
 //
 // direction - The direction in which the word will be placed (Across or Down).
 //
-// Returns:
-//
-// An error if the placement is invalid (not implemented here, returns nil by
-// default).
+// Returns: An error if the placement is invalid (not implemented here, returns
+// nil by default).
 func (b *Board) PlaceWordAt(start Location, word string, direction Direction) error {
 	// Obtain the deltas for the direction to determine how to increment the
 	// position for each character.
@@ -261,7 +257,6 @@ func (b *Board) PlaceWordAt(start Location, word string, direction Direction) er
 	// standard ASCII set.
 	runes := []rune(word)
 
-	// Iterate over each rune in the slice, placing each character on the board.
 	for i, r := range runes {
 		x := start.X + i*deltaX
 		y := start.Y + i*deltaY
@@ -271,21 +266,40 @@ func (b *Board) PlaceWordAt(start Location, word string, direction Direction) er
 		cell.UsageCount++
 	}
 
-	// Record the action of placing the word by appending a new PlacedWord
-	// struct to the board's PlacedWords slice. This includes details about the
-	// word's starting position, direction, and the word itself.
 	b.PlacedWords = append(b.PlacedWords, PlacedWord{Start: start, Direction: direction, Word: word})
-
-	// Update the total count of words placed on the board.
 	b.WordCount++
 
-	// Return nil to indicate successful placement. In a real application, error
-	// handling could be added to deal with situations where the word cannot be
-	// placed (e.g., out of bounds or overlapping conflicts).
+	//TODO: error handling
+
 	return nil
 }
 
-// IsComplete checks if the board is fully set up with all words placed.
+// DEPRECIATED: IsComplete checks if the board is fully set up with all words
+// placed.
 func (b *Board) IsComplete() bool {
 	return b.WordCount >= b.TotalWords
+}
+
+// Assuming each cell knows which word it belongs to (you might need to adjust your data structures)
+func (b *Board) RemoveWord(start Location, word string, direction Direction) {
+	deltaX, deltaY := getDirectionDeltas(direction)
+	runes := []rune(word)
+	for i := range runes {
+		x := start.X + i*deltaX
+		y := start.Y + i*deltaY
+		cell := b.Cells[y][x]
+		cell.UsageCount-- // Decrement the usage counter for this cell
+		if cell.UsageCount == 0 {
+			cell.Character = "" // Clear the character only if no other word is using this cell
+			cell.Filled = false
+		}
+	}
+	// Remove the word from PlacedWords and update WordCount
+	for index, placed := range b.PlacedWords {
+		if placed.Start == start && placed.Word == word && placed.Direction == direction {
+			b.PlacedWords = append(b.PlacedWords[:index], b.PlacedWords[index+1:]...)
+			break
+		}
+	}
+	b.WordCount--
 }
