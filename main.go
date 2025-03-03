@@ -128,7 +128,8 @@ func setUpBoard(width, height int, wordCount int) (*models.Board, error) {
 		return nil, fmt.Errorf("failed to create board boundaries: %w", err)
 	}
 
-	board := models.NewBoard(bounds, wordCount)
+	fileWriter := &models.OSFileWriter{} // Creating an instance of FileWriter
+	board := models.NewBoard(bounds, wordCount, fileWriter)
 	if board == nil {
 		return nil, fmt.Errorf("failed to initialize the crossword board")
 	}

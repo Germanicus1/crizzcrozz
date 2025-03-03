@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -20,10 +21,21 @@ type Board struct {
 	WordCount   int
 	TotalWords  int // Total number of words that need to be placed on the board.
 	Pool        *Pool
+	FileWriter  FileWriter `json:"-"` // Exclude from JSON serialization. Dependency injection for testing file I/O
+}
+
+type FileWriter interface {
+	WriteFile(name string, data []byte, perm os.FileMode) error
+}
+
+type OSFileWriter struct{}
+
+func (osw *OSFileWriter) WriteFile(name string, data []byte, perm os.FileMode) error {
+	return os.WriteFile(name, data, perm)
 }
 
 // NewBoard creates a new board with specified bounds and total words.
-func NewBoard(bounds *Bounds, totalWords int) *Board {
+func NewBoard(bounds *Bounds, totalWords int, filewriter FileWriter) *Board {
 	width := bounds.Width()
 	height := bounds.Height()
 	cells := make([][]*Cell, height)
@@ -38,6 +50,7 @@ func NewBoard(bounds *Bounds, totalWords int) *Board {
 		Cells:      cells,
 		TotalWords: totalWords,
 		WordCount:  0,
+		FileWriter: filewriter, // Ensuring FileWriter is always initialize
 	}
 }
 
@@ -45,12 +58,13 @@ func NewBoard(bounds *Bounds, totalWords int) *Board {
 //
 // Returns: Error if marshalling or file writing did not work; nil otherwise.
 func (b *Board) Save() error {
+	fmt.Println("Debug: Saving board data...") // REM: Debug output
 	data, err := json.Marshal(b)
 	if err != nil {
-		panic(err)
+		panic(err) //TODO: Handle more gracefully
 	}
 
-	err = os.WriteFile("board.json", data, 0644)
+	err = b.FileWriter.WriteFile("board.json", data, 0644)
 	if err != nil {
 		return err
 	}
@@ -69,60 +83,102 @@ func (b *Board) Save() error {
 //
 // Reports wether the word can be placed according to the rules of the game
 func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction) bool {
-	deltaX, deltaY := getDirectionDeltas(direction) // Get the direction deltas to determine how to increment the position.
-	intersected := false                            // Flag to track if the word intersects at least once with existing words.
-	intersectionCount := 0                          // Counter for the number of intersections with existing words.
-	charsInWord := len([]rune(word))                // word is a string which is a []byte. A unicode character can occupy 1-4 bytes
+	// fmt.Printf("Checking placement of '%s' at %d,%d direction: %v\n", word, start.X, start.Y, direction)
+	deltaX, deltaY := getDirectionDeltas(direction)
+	intersected := false
 
-	// Check if the placement of the entire word would be within the board's
-	// bounds.
-	if !b.isPlacementWithinBounds(start, charsInWord, deltaX, deltaY) {
+	// word is a string which is a []byte. A unicode character can occupy 1-4
+	// bytes. We need to make sure that each letter occupies only 1 cell.
+	lettersInWord := len([]rune(word))
+
+	// Step 1: Check if word fits on the board atr a certain position.
+	if !b.isPlacementWithinBounds(start, lettersInWord, deltaX, deltaY) {
 		return false
 	}
 
-	// Loop through each character in the word to check placement rules.
-	for i := 0; i < len([]rune(word)); i++ {
-		x := start.X + i*deltaX // Calculate x position of the current character.
-		y := start.Y + i*deltaY // Calculate y position of the current character.
-		isIntersection := false // Local flag to check if the current character intersects with a filled cell.
+	// Step 2: Check if letters can be placed. A word needs to have at leas one
+	// intersection, but can have more if they are NOT consecutive.
 
-		// Check if placing the current character causes a conflict with
-		// different letters already placed.
-		if isCellConflict(x, y, b, string(word[i])) {
+	intersected = b.canPlaceLetters(start, word, deltaX, deltaY)
+
+	// Step 3: Check if cells immediately before and after the word are empty to
+	// prevent contiguous word formation.
+	// placed at the boarder (0,0)
+	if !b.isPlacementIsolated(start, lettersInWord, deltaX, deltaY) {
+		return false
+	}
+
+	return intersected
+}
+
+func (b *Board) isPlacementIsolated(start Location, lettersInWord, deltaX, deltaY int) bool {
+	// Check the cell before the word
+	xBefore, yBefore := start.X-deltaX, start.Y-deltaY
+	if !isOutOfBound(xBefore, yBefore, b) && isCellFilled(xBefore, yBefore, b) {
+		return false
+	}
+
+	// Check the cell after the word
+	xAfter, yAfter := start.X+lettersInWord*deltaX, start.Y+lettersInWord*deltaY
+	if !isOutOfBound(xAfter, yAfter, b) && isCellFilled(xAfter, yAfter, b) {
+		return false
+	}
+
+	return true
+}
+
+// New function to handle character placement checks
+func (b *Board) canPlaceLetters(start Location, word string, deltaX, deltaY int) bool {
+	intersectedWord := false
+	intersectionCount := 0
+	runes := []rune(word)
+	consecutiveIntersections := 0 // Track consecutive intersections
+
+	for i := 0; i < len(runes); i++ {
+		x := start.X + i*deltaX
+		y := start.Y + i*deltaY
+		cellIsIntersection := false
+
+		// Check if placing the character causes a conflict
+		if isCellConflict(x, y, b, string(runes[i])) {
 			return false
 		}
 
-		// Check if the current placement intersects correctly without
-		// overlapping incorrectly.
-		if b.Cells[y][x].Filled && b.Cells[y][x].Character == string(word[i]) {
-			intersected = true
-			isIntersection = true
+		// Check if it intersects correctly with an existing letter
+		if b.isValidIntersection(x, y, string(runes[i])) {
+			intersectedWord = true
+			cellIsIntersection = true
 			intersectionCount++
-			if intersectionCount > 1 { // Ensure only one intersection to avoid multiple overlaps.
-				return false
-			}
+			consecutiveIntersections++
+		} else {
+			consecutiveIntersections = 0 // Reset count if not consecutive
 		}
 
-		// Check for invalid adjacent parallel placements.
-		if !isIntersection {
-			if isParallelPlacement(x, y, direction, b) {
-				return false
-			}
+		// If there are two or more consecutive intersections, placement is invalid
+		if consecutiveIntersections >= 2 {
+			return false
+		}
+
+		// Check for invalid adjacent placements (parallel words)
+		if !cellIsIntersection && isParallelPlacement(x, y, getDirectionFromDeltas(deltaX, deltaY), b) {
+			return false
 		}
 	}
 
-	// Check if cells immediately before and after the word are unoccupied to
-	// prevent contiguous word formation.
-	xBefore, yBefore := start.X-deltaX, start.Y-deltaY
-	xAfter, yAfter := start.X+charsInWord*deltaX, start.Y+charsInWord*deltaY
+	return intersectedWord
+}
 
-	if isOutOfBound(xBefore, yBefore, b) || isCellFilled(xBefore, yBefore, b) || isOutOfBound(xAfter, yAfter, b) || isCellFilled(xAfter, yAfter, b) {
-		return false
+// New function to check if an intersection is valid
+func (b *Board) isValidIntersection(x, y int, char string) bool {
+	return b.Cells[y][x].Filled && b.Cells[y][x].Character == char
+}
+
+// Helper function to determine the direction from deltas
+func getDirectionFromDeltas(deltaX, deltaY int) Direction {
+	if deltaX == 1 && deltaY == 0 {
+		return Across
 	}
-
-	// Ensure the word intersects at least once with existing words on the
-	// board.
-	return intersected
+	return Down
 }
 
 // isPlacementWithinBounds checks if the placement of the last character of the
@@ -229,9 +285,19 @@ func getDirectionDeltas(direction Direction) (int, int) {
 // Returns:
 //
 // true if conflict
-func isCellConflict(x, y int, b *Board, char string) bool {
-	cell := b.Cells[y][x]
-	return cell.Filled && cell.Character != char
+
+// func isCellConflict(x, y int, b *Board, char string) bool {
+// 	cell := b.Cells[y][x]
+// 	return cell.Filled && cell.Character != char
+// }
+
+func isCellConflict(x, y int, b *Board, letter string) bool {
+	cell := b.Cells[x][y]
+	if cell != nil && cell.Filled && cell.Character != letter {
+		// fmt.Printf("Conflict at %d,%d: Existing '%s' vs New '%s'\n", x, y, cell.Character, letter)
+		return true
+	}
+	return false
 }
 
 // PlaceWordAt places a word on the board at a specified location and in a given

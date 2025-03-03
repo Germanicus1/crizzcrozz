@@ -21,21 +21,6 @@ func NewBounds(topLeft, bottomRight Location) *Bounds {
 	}
 }
 
-// // NewBoundsSquare creates a square Bounds centered at zero with the given size
-// // Returns an error if size is negative.
-// func NewBoundsSquare(size int) (*Bounds, error) {
-// 	if size < 0 {
-// 		return nil, fmt.Errorf("size must be non-negative")
-// 	}
-// 	halfSize := size / 2 // Using integer division which automatically rounds down
-// 	return NewBounds(
-// 		Location{X: -halfSize, Y: -halfSize},
-// 		Location{X: halfSize, Y: halfSize},
-// 	), nil
-// }
-
-// NewBoundsRectangle creates a rectangle Bounds given width and height.
-// Returns an error if width or height are negative.
 func NewBoundsRectangle(width, height int) (*Bounds, error) {
 	if width < 0 || height < 0 {
 		return nil, fmt.Errorf("width and height must positive numbers")
