@@ -165,39 +165,6 @@ func TestGetDirectionDeltas(t *testing.T) {
 	}
 }
 
-func TestIsCellConflict(t *testing.T) {
-	board := &Board{
-		Cells: [][]*Cell{
-			{&Cell{Character: "a", Filled: true}, &Cell{Character: "b", Filled: true}},
-			{&Cell{Character: "c", Filled: true}, &Cell{Character: "d", Filled: true}},
-		},
-	}
-
-	tests := []struct {
-		name string
-		x, y int
-		char string
-		want bool
-	}{
-		{"No conflict", 0, 0, "a", false},     // Matching character, no conflict
-		{"Conflict", 0, 1, "a", true},         // Different character, conflict
-		{"Out of bounds x", 10, 0, "z", true}, // Out of bounds, will cause panic if not handled
-		{"Out of bounds y", 0, 10, "z", true}, // Out of bounds, will cause panic if not handled
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.x >= len(board.Cells[0]) || tt.y >= len(board.Cells) {
-				t.Skip("Skipping out of bounds test case")
-			} else {
-				if got := isCellConflict(tt.x, tt.y, board, tt.char); got != tt.want {
-					t.Errorf("isCellConflict() = %v, want %v", got, tt.want)
-				}
-			}
-		})
-	}
-}
-
 func setupBoardWithWord() *Board {
 	b := &Board{
 		Cells: [][]*Cell{

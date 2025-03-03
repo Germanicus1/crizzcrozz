@@ -150,11 +150,6 @@ func (b *Board) canPlaceLetters(start Location, word string, deltaX, deltaY int)
 		y := start.Y + i*deltaY
 		cellIsIntersection := false
 
-		// Check if placing the character causes a conflict
-		if isCellConflict(x, y, b, string(runes[i])) {
-			return false
-		}
-
 		// Check if it intersects correctly with an existing letter
 		if b.isValidIntersection(x, y, string(runes[i])) {
 			intersectedWord = true
@@ -179,7 +174,8 @@ func (b *Board) canPlaceLetters(start Location, word string, deltaX, deltaY int)
 	return intersectedWord
 }
 
-// New function to check if an intersection is valid
+// Check weather a cell is filled and if the character is the same as the
+// letter we are trying to fill it with.
 func (b *Board) isValidIntersection(x, y int, char string) bool {
 	return b.Cells[y][x].Filled && b.Cells[y][x].Character == char
 }
@@ -288,27 +284,6 @@ func getDirectionDeltas(direction Direction) (int, int) {
 		return 1, 0 // horizontal
 	}
 	return 0, 1 // vertical
-}
-
-// isCellConflict checks if there are any conflicting characters. The conflict
-// tested for is: overlapping character matches the current charater or not.
-//
-// Returns:
-//
-// true if conflict
-
-// func isCellConflict(x, y int, b *Board, char string) bool {
-// 	cell := b.Cells[y][x]
-// 	return cell.Filled && cell.Character != char
-// }
-
-func isCellConflict(x, y int, b *Board, letter string) bool {
-	cell := b.Cells[x][y]
-	if cell != nil && cell.Filled && cell.Character != letter {
-		// fmt.Printf("Conflict at %d,%d: Existing '%s' vs New '%s'\n", x, y, cell.Character, letter)
-		return true
-	}
-	return false
 }
 
 // PlaceWordAt places a word on the board at a specified location and in a given
