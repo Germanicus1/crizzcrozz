@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type PlacedWord struct {
@@ -19,9 +20,14 @@ type Board struct {
 	Cells       [][]*Cell
 	WordList    map[string]bool
 	WordCount   int
-	TotalWords  int // Total number of words that need to be placed on the board.
+	TotalWords  int
 	Pool        *Pool
 	FileWriter  FileWriter `json:"-"` // Exclude from JSON serialization. Dependency injection for testing file I/O
+
+	// Track the best solution found
+	BestBoard       [][]*Cell
+	BestWordCount   int
+	BestPlacedWords []PlacedWord
 }
 
 type FileWriter interface {
@@ -354,4 +360,40 @@ func (b *Board) RemoveWord(start Location, word string, direction Direction) {
 		}
 	}
 	b.WordCount--
+}
+
+func (b *Board) SaveBestSolution() {
+	b.BestWordCount = b.WordCount
+
+	// Deep copy the board cells
+	b.BestBoard = make([][]*Cell, len(b.Cells))
+	for i := range b.Cells {
+		b.BestBoard[i] = make([]*Cell, len(b.Cells[i]))
+		for j := range b.Cells[i] {
+			cellCopy := *b.Cells[i][j] // Copy struct
+			b.BestBoard[i][j] = &cellCopy
+		}
+	}
+
+	// Copy the placed words
+	b.BestPlacedWords = make([]PlacedWord, len(b.PlacedWords))
+	copy(b.BestPlacedWords, b.PlacedWords) //Directly assiging b.Cells, later changes will affect the stored best board.
+}
+
+// PrintBestSolution outputs the crossword board to the console. It marks filled
+// cells with their respective characters and empty cells with a dot.
+func (b *Board) PrintBestSolution() {
+	fmt.Println("Best Solution Found:")
+	for y := 0; y < len(b.BestBoard); y++ {
+		for x := 0; x < len(b.BestBoard[0]); x++ {
+			cell := b.BestBoard[y][x]
+			if cell != nil && cell.Filled {
+				fmt.Print(strings.ToUpper(cell.Character), " ")
+			} else {
+				fmt.Print(". ")
+			}
+		}
+		fmt.Println()
+	}
+	fmt.Printf("\nWords placed: %d\n", b.BestWordCount)
 }

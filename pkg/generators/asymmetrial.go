@@ -38,7 +38,8 @@ func (ag *AsymmetricalGenerator) placeFirstWord() error {
 	return nil
 }
 
-// TODO: Back-tracking. Keeop track of the best possible solution. Right now
+// TODO-HneObo:
+// Back-tracking. Keeop track of the best possible solution. Right now
 // it's all or nothing. The best possible solution is the highest number of
 // placed words with the given constraints.
 
@@ -68,6 +69,11 @@ func (ag *AsymmetricalGenerator) placeWordsRecursive(index int, maxRetries int) 
 			// Backtrack: remove the word and try the next placement
 			ag.Board.RemoveWord(location.Start, word, location.Direction)
 		}
+	}
+
+	// Even if no word is placed at this step, save if it's the best state so far
+	if ag.Board.WordCount > ag.Board.BestWordCount {
+		ag.Board.SaveBestSolution()
 	}
 
 	return fmt.Errorf("failed to place word: %s", word)
