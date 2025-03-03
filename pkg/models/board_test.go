@@ -289,40 +289,76 @@ func TestRemoveWord(t *testing.T) {
 // 	}
 // }
 
-func TestCanPlaceWordAt_BorderCases(t *testing.T) {
-	bounds := &Bounds{TopLeft: Location{X: 0, Y: 0}, BottomRight: Location{X: 8, Y: 8}}
-	board := NewBoard(bounds, 10, &OSFileWriter{})
-	board.Cells[0][0] = &Cell{Character: "t", Filled: true, UsageCount: 1}
-	board.Cells[0][3] = &Cell{Character: "t", Filled: true, UsageCount: 1}
-	board.Cells[3][0] = &Cell{Character: "t", Filled: true, UsageCount: 1}
-	board.Cells[8][3] = &Cell{Character: "t", Filled: true, UsageCount: 1}
-	board.Cells[8][0] = &Cell{Character: "t", Filled: true, UsageCount: 1}
-	// board.Cells[8][8] = &Cell{Character: "t", Filled: true, UsageCount: 1}
-	// board.Cells[0][8] = &Cell{Character: "t", Filled: true, UsageCount: 1}
-	// board.Cells[4][2] = &Cell{Character: "h", Filled: true, UsageCount: 1}
-	// board.Cells[2][4] = &Cell{Character: "h", Filled: true, UsageCount: 1}
+// func TestCanPlaceWordAt_BorderCases(t *testing.T) {
+// 	bounds := &Bounds{TopLeft: Location{X: 0, Y: 0}, BottomRight: Location{X: 8, Y: 8}}
+// 	board := NewBoard(bounds, 10, &OSFileWriter{})
+// 	board.Cells[0][0] = &Cell{Character: "t", Filled: true, UsageCount: 1}
+// 	board.Cells[0][3] = &Cell{Character: "t", Filled: true, UsageCount: 1}
+// 	board.Cells[3][0] = &Cell{Character: "t", Filled: true, UsageCount: 1}
+// 	board.Cells[8][3] = &Cell{Character: "t", Filled: true, UsageCount: 1}
+// 	board.Cells[8][0] = &Cell{Character: "t", Filled: true, UsageCount: 1}
+// 	// board.Cells[8][8] = &Cell{Character: "t", Filled: true, UsageCount: 1}
+// 	// board.Cells[0][8] = &Cell{Character: "t", Filled: true, UsageCount: 1}
+// 	// board.Cells[4][2] = &Cell{Character: "h", Filled: true, UsageCount: 1}
+// 	// board.Cells[2][4] = &Cell{Character: "h", Filled: true, UsageCount: 1}
 
-	printBoard(board)
+// 	printBoard(board)
+
+// 	tests := []struct {
+// 		name      string
+// 		start     Location
+// 		word      string
+// 		direction Direction
+// 		want      bool
+// 	}{
+// 		{"Word at upper left corner, Down", Location{X: 0, Y: 0}, "test", Down, true},
+// 		{"Word at upper left corner, Across", Location{X: 0, Y: 0}, "test", Across, true},
+// 		{"Word at left border, Across", Location{X: 0, Y: 3}, "test", Across, true},
+// 		{"Word at lower left corner, down (up)", Location{X: 0, Y: 5}, "test", Across, true},
+// 		// {"Word at right border", Location{X: 4, Y: 2}, "ok", Down, true},
+// 		// {"Word out of bounds", Location{X: 5, Y: 0}, "oops", Across, false},
+// 	}
+
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			got := board.CanPlaceWordAt(tt.start, tt.word, tt.direction)
+// 			// printBoard(board)
+// 			if got != tt.want {
+// 				t.Errorf("Test failed for %s: got %v, expected %v", tt.name, got, tt.want)
+// 			}
+// 		})
+// 	}
+// }
+
+func TestIsPlacementIsolated(t *testing.T) {
+	board := NewBoard(&Bounds{TopLeft: Location{0, 0}, BottomRight: Location{8, 8}}, 10, &OSFileWriter{})
+	board.Cells[3][3] = &Cell{Character: "x", Filled: true, UsageCount: 1}
+	board.Cells[2][8] = &Cell{Character: "x", Filled: true, UsageCount: 1}
+	board.Cells[8][8] = &Cell{Character: "x", Filled: true, UsageCount: 1}
 
 	tests := []struct {
-		name      string
-		start     Location
-		word      string
-		direction Direction
-		want      bool
+		name       string
+		start      Location
+		wordLength int
+		deltaX     int
+		deltaY     int
+		want       bool
 	}{
-		{"Word at upper left corner, Down", Location{X: 0, Y: 0}, "test", Down, true},
-		{"Word at upper left corner, Across", Location{X: 0, Y: 0}, "test", Across, true},
-		{"Word at left border, Across", Location{X: 0, Y: 3}, "test", Across, true},
-		{"Word at lower left corner, down (up)", Location{X: 0, Y: 5}, "test", Across, true},
-		// {"Word at right border", Location{X: 4, Y: 2}, "ok", Down, true},
-		// {"Word out of bounds", Location{X: 5, Y: 0}, "oops", Across, false},
+		{"Touching before (Across)", Location{X: 4, Y: 3}, 4, 1, 0, false},
+		{"Touching after (Across)", Location{X: 4, Y: 2}, 4, 1, 0, false},
+		{"Isolated word (Across)", Location{X: 5, Y: 3}, 4, 1, 0, true},
+		{"Touching before (Down)", Location{X: 3, Y: 4}, 4, 0, 1, false},
+		{"Touching after (Down)", Location{X: 3, Y: 1}, 2, 0, 1, false},
+		{"Isolated word (Down)", Location{X: 3, Y: 1}, 4, 0, 1, true},
+		{"Top-left (Down)", Location{X: 0, Y: 0}, 4, 0, 1, true},
+		{"Bottom-left (Down)", Location{X: 0, Y: 4}, 4, 0, 1, true},
+		{"Top-right (Down)", Location{X: 0, Y: 0}, 4, 0, 1, true},
+		{"Bottom-right (Across)", Location{X: 4, Y: 8}, 4, 1, 0, false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := board.CanPlaceWordAt(tt.start, tt.word, tt.direction)
-			// printBoard(board)
+			got := board.isPlacementIsolated(tt.start, tt.wordLength, tt.deltaX, tt.deltaY)
 			if got != tt.want {
 				t.Errorf("Test failed for %s: got %v, expected %v", tt.name, got, tt.want)
 			}

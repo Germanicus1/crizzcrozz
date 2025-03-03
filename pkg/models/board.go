@@ -79,7 +79,7 @@ func (b *Board) Save() error {
 //
 //	start - The starting location (x, y) for placing the word.
 //	word - The word to be placed.
-//	direction - The direction to place the word (e.g., horizontal or vertical).
+//	direction - The direction to place the word (e.g., Across (1,0) or Down (0,1) ).
 //
 // Reports wether the word can be placed according to the rules of the game
 func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction) bool {
@@ -89,10 +89,10 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 
 	// word is a string which is a []byte. A unicode character can occupy 1-4
 	// bytes. We need to make sure that each letter occupies only 1 cell.
-	lettersInWord := len([]rune(word))
+	lettersCountInWord := len([]rune(word))
 
 	// Step 1: Check if word fits on the board atr a certain position.
-	if !b.isPlacementWithinBounds(start, lettersInWord, deltaX, deltaY) {
+	if !b.isPlacementWithinBounds(start, lettersCountInWord, deltaX, deltaY) {
 		return false
 	}
 
@@ -104,13 +104,24 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 	// Step 3: Check if cells immediately before and after the word are empty to
 	// prevent contiguous word formation.
 	// placed at the boarder (0,0)
-	if !b.isPlacementIsolated(start, lettersInWord, deltaX, deltaY) {
+	if !b.isPlacementIsolated(start, lettersCountInWord, deltaX, deltaY) {
 		return false
 	}
 
 	return intersected
 }
 
+//	isPlacementIsolated checks weather the cell before or after the word is
+//	empyt. This only if thew cell is not out of bound.
+//
+// start - a Location structx with X, Y integers
+//
+// lettersCountInWord - The number of letters (not bytes) in the word
+//
+// deltaX/deltaY - Returned  by getDirection(direction). (0,1) for down and
+// (1,0) for across.
+//
+// Returns: weather it's an isolated placement
 func (b *Board) isPlacementIsolated(start Location, lettersInWord, deltaX, deltaY int) bool {
 	// Check the cell before the word
 	xBefore, yBefore := start.X-deltaX, start.Y-deltaY
