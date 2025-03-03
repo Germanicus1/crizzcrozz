@@ -27,7 +27,7 @@ var ErrInvalidDimensions = errors.New("invalid board dimensions")
 
 func main() {
 	// width, height, maxRetries, fileName := parseFlags()
-	maxRetries, fileName := parseFlags()
+	fileName := parseFlags()
 
 	wordsAndHints, err := readWordsFromFile(fileName)
 	if err != nil {
@@ -49,66 +49,23 @@ func main() {
 	words = sortWordsByLength(words)
 
 	// Find the best board using binary search
-	board, bestSize, err := findOptimalBoardSize(words, maxRetries)
+	board, bestSize, err := findOptimalBoardSize(words)
 	if err != nil {
 		log.Fatalf("Failed to generate crossword: %v", err)
 	}
 
 	fmt.Printf("Optimal board size found: %dx%d\n", bestSize, bestSize)
-
-	// // Sets up the crossword board with the specified dimensions and
-	// // words.
-	// board, err := setUpBoard(width, height, len(words))
-	// if err != nil {
-	// 	// Check if the error is due to invalid dimensions
-	// 	if errors.Is(err, ErrInvalidDimensions) {
-	// 		log.Fatalf("Cannot create a board with invalid dimensions: %v", err)
-	// 	} else {
-	// 		log.Printf("Failed to generate the crossword: %v", err)
-	// 		if board != nil {
-	// 			printBoard(board) // Attempts to print the current state of the board before exiting.
-	// 		}
-	// 		log.Fatal("Exiting due to unrecoverable error setting up the board.")
-	// 	}
-	// }
-
-	// // Attempts to generate the crossword puzzle using the board setup.
-	// if err := generateCrossword(board, words, maxRetries); err != nil {
-	// 	// REM: debugging
-	// 	fmt.Printf("Words placed: %v (%v)\n", board.WordCount, board.TotalWords)
-	// 	fmt.Println(err)
-	// }
-	// err = board.Save()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// fmt.Printf("All Words placed: %v (%v)\n", board.WordCount, board.TotalWords)
-	// fmt.Println("Placed on board:", len(board.PlacedWords))
-	// fmt.Println("Wordcount:", board.WordCount)
-
-	// printBoard(board)
 	board.PrintBestSolution()
 }
 
-// parseFlags parses the width and height command-line arguments. It
-// returns the parsed dimensions, using width for height if height is
-// not specified. Defaults to a square of 23
-// func parseFlags() (int, int, int, string) {
-func parseFlags() (int, string) {
-	var width, height, r int
+// parseFlags returns the filename of the csv-file to parse.
+func parseFlags() string {
 	var fileName string
-	// flag.IntVar(&width, "width", 23, "Specify the width of the board. Default is 23.")
-	// flag.IntVar(&height, "height", 0, "Specify the height of the board. Defaults to the value of width if not set.")
-	flag.IntVar(&r, "r", 0, "Specify the number retries to place a word. Default is 0.")
 	flag.StringVar(&fileName, "f", "vocabulary.csv", "Specify the file with the words and hints. Defaults to vocabulary.csv.")
 	flag.Parse()
 
-	if height == 0 {
-		height = width
-	}
-
 	// return width, height, r, fileName
-	return r, fileName
+	return fileName
 }
 
 // setUpBoard initializes a crossword board with given dimensions and a
@@ -135,13 +92,13 @@ func setUpBoard(width, height int, wordCount int) (*models.Board, error) {
 
 // generateCrossword tries to populate the crossword board with words.
 // It returns an error if the crossword generation fails.
-func generateCrossword(b *models.Board, words []string, maxRetries int) error {
+func generateCrossword(b *models.Board, words []string) error {
 	newPool := models.NewPool() // Creates a new pool to hold words.
 	newPool.LoadWords(words)    // Loads words into the pool.
 
 	generator := generators.NewAsymmetricalGenerator(b, newPool) // Initializes a new crossword generator.
 
-	err := generator.Generate(maxRetries) // Attempts to generate the crossword.
+	err := generator.Generate() // Attempts to generate the crossword.
 	if err != nil {
 		return err // Returns an error if generation is unsuccessful.
 	}
@@ -174,7 +131,7 @@ func sortWordsByLength(words []string) []string {
 	return words
 }
 
-func findOptimalBoardSize(words []string, maxRetries int) (*models.Board, int, error) {
+func findOptimalBoardSize(words []string) (*models.Board, int, error) {
 	low := estimateInitialBoardSize(words) / 2 // Start smaller
 	high := low * 3                            // Start with a reasonable max size
 
@@ -190,7 +147,7 @@ func findOptimalBoardSize(words []string, maxRetries int) (*models.Board, int, e
 			return nil, 0, err
 		}
 
-		err = generateCrossword(board, words, maxRetries)
+		err = generateCrossword(board, words)
 		if err == nil { // Success: all words fit
 			bestBoard = board
 			bestSize = mid

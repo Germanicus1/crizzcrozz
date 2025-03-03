@@ -43,17 +43,17 @@ func (ag *AsymmetricalGenerator) placeFirstWord() error {
 // it's all or nothing. The best possible solution is the highest number of
 // placed words with the given constraints.
 
-func (ag *AsymmetricalGenerator) Generate(maxRetries int) error {
+func (ag *AsymmetricalGenerator) Generate() error {
 	err := ag.placeFirstWord()
 	if err != nil {
 		return err
 	}
 
-	return ag.placeWordsRecursive(0, maxRetries) // Start with the first word
+	return ag.placeWordsRecursive(0) // Start with the first word
 }
 
 // Recursive function to place words
-func (ag *AsymmetricalGenerator) placeWordsRecursive(index int, maxRetries int) error {
+func (ag *AsymmetricalGenerator) placeWordsRecursive(index int) error {
 	if index == len(ag.WordPool.Words) { // All words placed successfully
 		return nil
 	}
@@ -63,7 +63,7 @@ func (ag *AsymmetricalGenerator) placeWordsRecursive(index int, maxRetries int) 
 
 	for _, location := range placements {
 		if err := ag.Board.PlaceWordAt(location.Start, word, location.Direction); err == nil {
-			if err := ag.placeWordsRecursive(index+1, maxRetries); err == nil {
+			if err := ag.placeWordsRecursive(index + 1); err == nil {
 				return nil // Word placed successfully, recursion successful
 			}
 			// Backtrack: remove the word and try the next placement

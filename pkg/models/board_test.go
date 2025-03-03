@@ -332,16 +332,3 @@ func TestIsPlacementIsolated(t *testing.T) {
 		})
 	}
 }
-
-func printBoard(b *Board) {
-	for _, row := range b.Cells {
-		for _, cell := range row {
-			if cell.Filled {
-				fmt.Printf("%v ", cell.Character)
-			} else {
-				fmt.Print(". ") // Prints a dot for unfilled cells.
-			}
-		}
-		fmt.Println() // Ensures each row of the board is printed on a new line.
-	}
-}
