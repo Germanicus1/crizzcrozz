@@ -22,14 +22,16 @@ func NewBounds(topLeft, bottomRight Location) *Bounds {
 }
 
 func NewBoundsRectangle(width, height int) (*Bounds, error) {
-	if width < 0 || height < 0 {
-		return nil, fmt.Errorf("width and height must positive numbers")
+	if width < 1 || height < 1 {
+		return nil, fmt.Errorf("width and height must be positive numbers")
 	}
+
 	halfSizeX := width / 2
 	halfSizeY := height / 2
+
 	return NewBounds(
 		Location{X: -halfSizeX, Y: -halfSizeY},
-		Location{X: halfSizeX, Y: halfSizeY},
+		Location{X: -halfSizeX + width - 1, Y: -halfSizeY + height - 1},
 	), nil
 }
 

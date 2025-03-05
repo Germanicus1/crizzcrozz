@@ -383,7 +383,12 @@ func (b *Board) SaveBestSolution() {
 // PrintBestSolution outputs the crossword board to the console. It marks filled
 // cells with their respective characters and empty cells with a dot.
 func (b *Board) PrintBestSolution() {
-	fmt.Println("Best Solution Found:")
+	if b.BestBoard == nil {
+		fmt.Println("No valid crossword solution found.")
+		return
+	}
+
+	// fmt.Println("\nBest Solution Found:")
 	for y := 0; y < len(b.BestBoard); y++ {
 		for x := 0; x < len(b.BestBoard[0]); x++ {
 			cell := b.BestBoard[y][x]
@@ -395,5 +400,4 @@ func (b *Board) PrintBestSolution() {
 		}
 		fmt.Println()
 	}
-	// REM fmt.Printf("\nWords placed: %d\n", len(b.PlacedWords))
 }

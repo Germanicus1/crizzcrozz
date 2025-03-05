@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"sort"
 	"strings"
@@ -26,8 +27,17 @@ type wordsAndHints struct {
 var ErrInvalidDimensions = errors.New("invalid board dimensions")
 
 func main() {
-	findOptimum, width, height, maxRetries, fileName := parseFlags()
+	estimate, findOptimalSize, width, _, maxRetries, fileName := parseFlags()
 	// fileName := parseFlags()
+	if !findOptimalSize && !estimate && width == 1 {
+		// FIXME: Improve error handling
+		fmt.Println("You need to specify a reasonable width for the board. Use the -f=<size> or -e=TRUE for estimating a size.")
+		return
+	}
+
+	fmt.Println("estimate:", estimate)
+	fmt.Println("findOptimalSize:", findOptimalSize)
+	// findOptimalSize = false
 
 	wordsAndHints, err := readWordsFromFile(fileName)
 	if err != nil {
@@ -38,78 +48,49 @@ func main() {
 		}
 	}
 
-	// fmt.Printf("Read %d words and hints from the file.\n", len(wordsAndHints))
+	cleanedWords := cleanWords(wordsAndHints)
+	sortedWords := sortWordsByLength(cleanedWords)
 
-	var words []string
-	for _, v := range wordsAndHints {
-		cleanWord := strings.TrimSpace(v.Word)
-		words = append(words, cleanWord)
+	var bestBoard *models.Board
+
+	if estimate {
+		width = estimateInitialBoardSize(sortedWords)
 	}
-
-	words = sortWordsByLength(words)
-
-	if !findOptimum {
-		if width == 1 {
-			fmt.Println("Specify a width for the board")
-			return
-		}
-
-		height = width // Always a square board
-
-		// Track the best attempt
-		var bestBoard *models.Board
-		maxWordsPlaced := 0
-
-		for attempt := 0; attempt < maxRetries; attempt++ { // Limit attempts to prevent infinite loops
-			tempBoard, _ := setUpBoard(width, height, len(words)) // Create a fresh board
-			err := generateCrossword(tempBoard, words, maxRetries)
-
-			if err == nil { // Success, all words fit
-				bestBoard = tempBoard
-				break
-			}
-
-			// Update bestBoard if this attempt placed more words
-			if tempBoard.WordCount > maxWordsPlaced {
-				maxWordsPlaced = tempBoard.WordCount
-				bestBoard = tempBoard
-			}
-		}
-
-		if bestBoard == nil {
-			fmt.Println("No words could be placed. Try a larger board.")
-			return
-		}
-
-		fmt.Printf("Board size: %dx%d | Words placed: %d/%d\n", width, height, bestBoard.WordCount, len(words))
-		bestBoard.PrintBestSolution()
+	bestBoard = createBoard(sortedWords, maxRetries, width)
+	if bestBoard == nil {
+		fmt.Println("No words could be placed. Try a larger board.")
 		return
 	}
 
-	// Find the best board using binary search
-	board, bestSize, err := findOptimalBoardSize(words, maxRetries)
-	if err != nil {
-		log.Fatalf("Failed to generate crossword: %v", err)
-	}
+	fmt.Printf("Board size: %dx%d | Words placed: %d/%d\n", bestBoard.Bounds.Width(), bestBoard.Bounds.Height(), bestBoard.BestWordCount, bestBoard.TotalWords)
+	bestBoard.PrintBestSolution()
 
-	fmt.Printf("Optimal board size found: %dx%d\n", bestSize, bestSize)
-	board.PrintBestSolution()
+	// TODO: Implement discovery of smallest board size possible with all the
+	// words placed.
+
+	// board, bestSize, err := findOptimalBoardSize(words, maxRetries)
+	// if err != nil {
+	// 	log.Fatalf("Failed to generate crossword: %v", err)
+	// }
+
+	// fmt.Printf("Optimal board size found: %dx%d\n", bestSize, bestSize)
+	// board.PrintBestSolution()
 }
 
 // parseFlags returns the filename of the csv-file to parse.
-func parseFlags() (bool, int, int, int, string) {
+func parseFlags() (bool, bool, int, int, int, string) {
 	var fileName string
 	var width, height, maxRetries int
-	var findOptimum bool
-	flag.StringVar(&fileName, "f", "vocabulary.csv", "Specify the file with the words and hints. Defaults to vocabulary.csv.")
+	var findOptimalSize, estimate bool
+	flag.StringVar(&fileName, "f", "vocabulary_eng.csv", "Specify the file with the words and hints. Defaults to vocabulary.csv.")
 	flag.IntVar(&width, "w", 1, "Specify the width of the board. Defaults to 1.")
 	flag.IntVar(&height, "h", 1, "Specify the width of the board. Defaults to 1")
-	flag.IntVar(&maxRetries, "r", 0, "Specify the max number of retries to build the crossword. Defaults to 1.")
-	flag.BoolVar(&findOptimum, "o", false, "Decide if the genereateor has to find th optimum board size.")
+	flag.IntVar(&maxRetries, "r", 1, "Specify the max number of retries to build the crossword. Defaults to 1.")
+	flag.BoolVar(&findOptimalSize, "o", false, "Decide if the generator has to find th optimum board size. Default FALSE.")
+	flag.BoolVar(&estimate, "e", true, "Decide if the program can calculate an estimated board size. Default FALSE.")
 	flag.Parse()
 
-	// return width, height, r, fileName
-	return findOptimum, width, height, maxRetries, fileName
+	return estimate, findOptimalSize, width, height, maxRetries, fileName
 }
 
 // setUpBoard initializes a crossword board with given dimensions and a
@@ -158,7 +139,7 @@ func generateCrossword(b *models.Board, words []string, maxRetries int) error {
 	maxWordsPlaced := 0
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		fmt.Printf("Attempt %d/%d to generate crossword...\n", attempt+1, maxRetries)
+		// REM fmt.Printf("Attempt %d/%d to generate crossword...\n", attempt+1, maxRetries)
 
 		err := generator.Generate()
 		if err == nil { // Success: all words fit
@@ -172,13 +153,13 @@ func generateCrossword(b *models.Board, words []string, maxRetries int) error {
 			bestBoard = b
 		}
 
-		fmt.Printf("Retry %d/%d: Words placed: %d/%d\n", attempt+1, maxRetries, b.WordCount, len(words))
+		// REM fmt.Printf("Retry %d/%d: Words placed: %d/%d\n", attempt+1, maxRetries, b.WordCount, len(words))
 	}
 
 	// Ensure something is printed even if all retries fail
 	if bestBoard != nil {
 		fmt.Println("Could not fit all words. Showing best attempt:")
-		bestBoard.PrintBestSolution()
+		// bestBoard.PrintBestSolution()
 		return fmt.Errorf("crossword generation failed after %d retries", maxRetries)
 	}
 
@@ -245,26 +226,26 @@ func findOptimalBoardSize(words []string, maxRetries int) (*models.Board, int, e
 	return bestBoard, bestSize, nil
 }
 
-func estimateInitialBoardSize(words []string) int {
-	// totalLength := 0
-	// longestWord := 0
+// func estimateInitialBoardSize(words []string) int {
+// 	// totalLength := 0
+// 	// longestWord := 0
 
-	// for _, word := range words {
-	// 	wordLen := len([]rune(word))
-	// 	totalLength += wordLen
-	// 	if wordLen > longestWord {
-	// 		longestWord = wordLen
-	// 	}
-	// }
+// 	// for _, word := range words {
+// 	// 	wordLen := len([]rune(word))
+// 	// 	totalLength += wordLen
+// 	// 	if wordLen > longestWord {
+// 	// 		longestWord = wordLen
+// 	// 	}
+// 	// }
 
-	// // Start with something proportional to total word length
-	// estimatedSize := int(float64(totalLength) * 0.7) // 70% of total length
-	// if estimatedSize < longestWord {                 // Ensure at least the longest word fits
-	// 	estimatedSize = longestWord + 2
-	// }
+// 	// // Start with something proportional to total word length
+// 	// estimatedSize := int(float64(totalLength) * 0.7) // 70% of total length
+// 	// if estimatedSize < longestWord {                 // Ensure at least the longest word fits
+// 	// 	estimatedSize = longestWord + 2
+// 	// }
 
-	return int(float64(len([]rune(words[0]))) * 1.5)
-}
+// 	return int(float64(len([]rune(words[0]))) * 1.5)
+// }
 
 // printBoard outputs the current state of the crossword board to the
 // console. It marks filled cells with their respective characters and
@@ -280,4 +261,79 @@ func printBoard(b *models.Board) {
 		}
 		fmt.Println() // Ensures each row of the board is printed on a new line.
 	}
+}
+
+func estimateInitialBoardSize(words []string) int {
+	wordCount := len(words)
+	if wordCount == 0 {
+		return 10 // Default minimum size
+		// FIXME: This should probably retrun an error.
+	}
+
+	longestWord := 0
+	totalLength := 0
+
+	for _, word := range words {
+		wordLen := len([]rune(word))
+		totalLength += wordLen
+		if wordLen > longestWord {
+			longestWord = wordLen
+		}
+	}
+
+	averageWordLength := totalLength / wordCount
+
+	// Adjust density factor based on expected intersection
+	densityFactor := 1.2 // Increase density factor for better spacing
+
+	// Adjust padding dynamically based on longest word and total words
+	padding := int(math.Max(float64(longestWord)*0.3, float64(wordCount)*0.3)) // More words → more padding
+
+	// Estimate board size using an improved formula
+	estimatedSize := int(math.Sqrt(float64(wordCount) * float64(averageWordLength) * densityFactor))
+
+	// Ensure it's at least large enough for the longest word + padding
+	if estimatedSize < longestWord+padding {
+		estimatedSize = longestWord + padding
+	}
+
+	// Add extra space for flexibility
+	// estimatedSize += 3
+
+	return estimatedSize
+}
+
+func cleanWords(wh []*wordsAndHints) []string {
+	var words []string
+	for _, v := range wh {
+		cleanWord := strings.TrimSpace(v.Word)
+		words = append(words, cleanWord)
+	}
+	return words
+}
+
+func createBoard(sortedWords []string, maxRetries, width int) *models.Board {
+	height := width // Always a square board
+
+	// Track the best attempt
+	var bestBoard *models.Board
+	maxWordsPlaced := 0
+
+	for attempt := 0; attempt < maxRetries; attempt++ { // Limit attempts to prevent infinite loops
+		tempBoard, _ := setUpBoard(width, height, len(sortedWords)) // Create a fresh board
+		err := generateCrossword(tempBoard, sortedWords, maxRetries)
+
+		if err == nil { // Success, all words fit
+			bestBoard = tempBoard
+			break
+		}
+
+		// Update bestBoard if this attempt placed more words
+		if tempBoard.WordCount > maxWordsPlaced {
+			maxWordsPlaced = tempBoard.WordCount
+			bestBoard = tempBoard
+		}
+	}
+
+	return bestBoard
 }
