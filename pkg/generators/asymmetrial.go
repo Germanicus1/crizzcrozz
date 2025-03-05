@@ -3,6 +3,7 @@ package generators
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Germanicus1/crizzcrozz/pkg/models"
 )
@@ -43,41 +44,109 @@ func (ag *AsymmetricalGenerator) placeFirstWord() error {
 // it's all or nothing. The best possible solution is the highest number of
 // placed words with the given constraints.
 
+// func (ag *AsymmetricalGenerator) Generate() error {
+// 	err := ag.placeFirstWord()
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return ag.placeWordsRecursive(1) // Start with the first word
+// }
+
 func (ag *AsymmetricalGenerator) Generate() error {
+	// REM fmt.Println("Starting crossword generation...") // Debug
+
 	err := ag.placeFirstWord()
 	if err != nil {
+		fmt.Println("Error placing first word:", err) // Debug
 		return err
 	}
 
-	return ag.placeWordsRecursive(0) // Start with the first word
+	// REM fmt.Println("First word placed successfully.") // Debug
+
+	err = ag.placeWordsRecursive(1) // Start from second word
+	if err != nil {
+		// REM fmt.Println("Word placement failed. Showing best attempt.")
+		ag.Board.PrintBestSolution()
+		return fmt.Errorf("crossword generation failed: %s", err)
+	}
+
+	fmt.Println("Crossword generation completed successfully!") // Debug
+	return nil
 }
 
 // Recursive function to place words
+var backtrackCount int = 0 // Global counter for backtracking
+
 func (ag *AsymmetricalGenerator) placeWordsRecursive(index int) error {
-	if index == len(ag.WordPool.Words) { // All words placed successfully
+	if index >= len(ag.WordPool.Words) {
+		fmt.Println("\nAll words placed successfully!") // Ensure newline when done
 		return nil
 	}
 
 	word := ag.WordPool.Words[index]
 	placements := ag.FindPlacementLocations(word)
 
+	if len(placements) == 0 {
+		fmt.Println("\nNo placements found for:", word) // Ensure newline
+		return fmt.Errorf("no placements available for word: %s", word)
+	}
+
+	failureCount := 0
+	maxFailures := len(placements) / 2
+
 	for _, location := range placements {
 		if err := ag.Board.PlaceWordAt(location.Start, word, location.Direction); err == nil {
-			if err := ag.placeWordsRecursive(index + 1); err == nil {
-				return nil // Word placed successfully, recursion successful
+			err := ag.placeWordsRecursive(index + 1)
+			if err == nil {
+				return nil
 			}
+
 			// Backtrack: remove the word and try the next placement
 			ag.Board.RemoveWord(location.Start, word, location.Direction)
+			failureCount++
+			backtrackCount++ // Increment global counter
+
+			// Print backtracking count in place (overwrite previous line)
+			fmt.Printf("\rBacktracking: %d", backtrackCount)
+			time.Sleep(10 * time.Millisecond) // Small delay for visibility
+
+			if failureCount >= maxFailures {
+				// fmt.Println("\nToo many failed placements for word:", word) // Ensure newline
+				return fmt.Errorf("too many failed placements for word: %s", word)
+			}
 		}
 	}
 
-	// Even if no word is placed at this step, save if it's the best state so far
-	if ag.Board.WordCount > ag.Board.BestWordCount {
-		ag.Board.SaveBestSolution()
-	}
-
+	fmt.Println("\nFailed to place:", word) // Ensure newline
 	return fmt.Errorf("failed to place word: %s", word)
 }
+
+// func (ag *AsymmetricalGenerator) placeWordsRecursive(index int) error {
+// 	if index == len(ag.WordPool.Words) { // All words placed successfully
+// 		return nil
+// 	}
+
+// 	word := ag.WordPool.Words[index]
+// 	placements := ag.FindPlacementLocations(word)
+
+// 	for _, location := range placements {
+// 		if err := ag.Board.PlaceWordAt(location.Start, word, location.Direction); err == nil {
+// 			if err := ag.placeWordsRecursive(index + 1); err == nil {
+// 				return nil // Word placed successfully, recursion successful
+// 			}
+// 			// Backtrack: remove the word and try the next placement
+// 			ag.Board.RemoveWord(location.Start, word, location.Direction)
+// 		}
+// 	}
+
+// 	// Even if no word is placed at this step, save if it's the best state so far
+// 	if ag.Board.WordCount > ag.Board.BestWordCount {
+// 		ag.Board.SaveBestSolution()
+// 	}
+
+// 	return fmt.Errorf("failed to place word: %s", word)
+// }
 
 type Placement struct {
 	Start     models.Location

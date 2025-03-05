@@ -26,8 +26,8 @@ type wordsAndHints struct {
 var ErrInvalidDimensions = errors.New("invalid board dimensions")
 
 func main() {
-	// width, height, maxRetries, fileName := parseFlags()
-	fileName := parseFlags()
+	findOptimum, width, height, maxRetries, fileName := parseFlags()
+	// fileName := parseFlags()
 
 	wordsAndHints, err := readWordsFromFile(fileName)
 	if err != nil {
@@ -48,8 +48,46 @@ func main() {
 
 	words = sortWordsByLength(words)
 
+	if !findOptimum {
+		if width == 1 {
+			fmt.Println("Specify a width for the board")
+			return
+		}
+
+		height = width // Always a square board
+
+		// Track the best attempt
+		var bestBoard *models.Board
+		maxWordsPlaced := 0
+
+		for attempt := 0; attempt < maxRetries; attempt++ { // Limit attempts to prevent infinite loops
+			tempBoard, _ := setUpBoard(width, height, len(words)) // Create a fresh board
+			err := generateCrossword(tempBoard, words, maxRetries)
+
+			if err == nil { // Success, all words fit
+				bestBoard = tempBoard
+				break
+			}
+
+			// Update bestBoard if this attempt placed more words
+			if tempBoard.WordCount > maxWordsPlaced {
+				maxWordsPlaced = tempBoard.WordCount
+				bestBoard = tempBoard
+			}
+		}
+
+		if bestBoard == nil {
+			fmt.Println("No words could be placed. Try a larger board.")
+			return
+		}
+
+		fmt.Printf("Board size: %dx%d | Words placed: %d/%d\n", width, height, bestBoard.WordCount, len(words))
+		bestBoard.PrintBestSolution()
+		return
+	}
+
 	// Find the best board using binary search
-	board, bestSize, err := findOptimalBoardSize(words)
+	board, bestSize, err := findOptimalBoardSize(words, maxRetries)
 	if err != nil {
 		log.Fatalf("Failed to generate crossword: %v", err)
 	}
@@ -59,13 +97,19 @@ func main() {
 }
 
 // parseFlags returns the filename of the csv-file to parse.
-func parseFlags() string {
+func parseFlags() (bool, int, int, int, string) {
 	var fileName string
+	var width, height, maxRetries int
+	var findOptimum bool
 	flag.StringVar(&fileName, "f", "vocabulary.csv", "Specify the file with the words and hints. Defaults to vocabulary.csv.")
+	flag.IntVar(&width, "w", 1, "Specify the width of the board. Defaults to 1.")
+	flag.IntVar(&height, "h", 1, "Specify the width of the board. Defaults to 1")
+	flag.IntVar(&maxRetries, "r", 0, "Specify the max number of retries to build the crossword. Defaults to 1.")
+	flag.BoolVar(&findOptimum, "o", false, "Decide if the genereateor has to find th optimum board size.")
 	flag.Parse()
 
 	// return width, height, r, fileName
-	return fileName
+	return findOptimum, width, height, maxRetries, fileName
 }
 
 // setUpBoard initializes a crossword board with given dimensions and a
@@ -92,17 +136,54 @@ func setUpBoard(width, height int, wordCount int) (*models.Board, error) {
 
 // generateCrossword tries to populate the crossword board with words.
 // It returns an error if the crossword generation fails.
-func generateCrossword(b *models.Board, words []string) error {
-	newPool := models.NewPool() // Creates a new pool to hold words.
-	newPool.LoadWords(words)    // Loads words into the pool.
+// func generateCrossword(b *models.Board, words []string) error {
+// 	newPool := models.NewPool() // Creates a new pool to hold words.
+// 	newPool.LoadWords(words)    // Loads words into the pool.
 
-	generator := generators.NewAsymmetricalGenerator(b, newPool) // Initializes a new crossword generator.
+// 	generator := generators.NewAsymmetricalGenerator(b, newPool) // Initializes a new crossword generator.
 
-	err := generator.Generate() // Attempts to generate the crossword.
-	if err != nil {
-		return err // Returns an error if generation is unsuccessful.
+//		err := generator.Generate() // Attempts to generate the crossword.
+//		if err != nil {
+//			return err // Returns an error if generation is unsuccessful.
+//		}
+//		return nil
+//	}
+func generateCrossword(b *models.Board, words []string, maxRetries int) error {
+	newPool := models.NewPool()
+	newPool.LoadWords(words)
+
+	generator := generators.NewAsymmetricalGenerator(b, newPool)
+
+	var bestBoard *models.Board
+	maxWordsPlaced := 0
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		fmt.Printf("Attempt %d/%d to generate crossword...\n", attempt+1, maxRetries)
+
+		err := generator.Generate()
+		if err == nil { // Success: all words fit
+			fmt.Println("Successfully generated crossword.")
+			return nil
+		}
+
+		// Track the best attempt
+		if b.WordCount > maxWordsPlaced {
+			maxWordsPlaced = b.WordCount
+			bestBoard = b
+		}
+
+		fmt.Printf("Retry %d/%d: Words placed: %d/%d\n", attempt+1, maxRetries, b.WordCount, len(words))
 	}
-	return nil
+
+	// Ensure something is printed even if all retries fail
+	if bestBoard != nil {
+		fmt.Println("Could not fit all words. Showing best attempt:")
+		bestBoard.PrintBestSolution()
+		return fmt.Errorf("crossword generation failed after %d retries", maxRetries)
+	}
+
+	fmt.Println("No words could be placed. Try increasing the board size.")
+	return fmt.Errorf("crossword generation failed completely")
 }
 
 // readWordsFromFile reads words and their hints from a specified CSV
@@ -131,7 +212,7 @@ func sortWordsByLength(words []string) []string {
 	return words
 }
 
-func findOptimalBoardSize(words []string) (*models.Board, int, error) {
+func findOptimalBoardSize(words []string, maxRetries int) (*models.Board, int, error) {
 	low := estimateInitialBoardSize(words) / 2 // Start smaller
 	high := low * 3                            // Start with a reasonable max size
 
@@ -147,7 +228,7 @@ func findOptimalBoardSize(words []string) (*models.Board, int, error) {
 			return nil, 0, err
 		}
 
-		err = generateCrossword(board, words)
+		err = generateCrossword(board, words, maxRetries)
 		if err == nil { // Success: all words fit
 			bestBoard = board
 			bestSize = mid
@@ -183,4 +264,20 @@ func estimateInitialBoardSize(words []string) int {
 	// }
 
 	return int(float64(len([]rune(words[0]))) * 1.5)
+}
+
+// printBoard outputs the current state of the crossword board to the
+// console. It marks filled cells with their respective characters and
+// empty cells with a dot.
+func printBoard(b *models.Board) {
+	for _, row := range b.Cells {
+		for _, cell := range row {
+			if cell.Filled {
+				fmt.Printf("%v ", string(cell.Character))
+			} else {
+				fmt.Print(". ") // Prints a dot for unfilled cells.
+			}
+		}
+		fmt.Println() // Ensures each row of the board is printed on a new line.
+	}
 }

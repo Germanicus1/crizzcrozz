@@ -395,5 +395,5 @@ func (b *Board) PrintBestSolution() {
 		}
 		fmt.Println()
 	}
-	fmt.Printf("\nWords placed: %d\n", b.BestWordCount)
+	// REM fmt.Printf("\nWords placed: %d\n", len(b.PlacedWords))
 }
