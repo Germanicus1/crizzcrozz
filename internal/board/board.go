@@ -1,4 +1,4 @@
-package models
+package board
 
 import (
 	"encoding/json"
@@ -88,32 +88,77 @@ func (b *Board) Save() error {
 //	direction - The direction to place the word (e.g., Across (1,0) or Down (0,1) ).
 //
 // Reports wether the word can be placed according to the rules of the game
+// func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction) bool {
+// 	// fmt.Printf("Checking placement of '%s' at %d,%d direction: %v\n", word, start.X, start.Y, direction)
+// 	deltaX, deltaY := getDirectionDeltas(direction)
+// 	intersected := false
+
+// 	// word is a string which is a []byte. A unicode character can occupy 1-4
+// 	// bytes. We need to make sure that each letter occupies only 1 cell.
+// 	lettersCountInWord := len([]rune(word))
+
+// 	// Step 1: Check if word fits on the board atr a certain position.
+// 	if !b.isPlacementWithinBounds(start, lettersCountInWord, deltaX, deltaY) {
+// 		return false
+// 	}
+
+// 	// Step 2: Check if letters can be placed. A word needs to have at leas one
+// 	// intersection, but can have more if they are NOT consecutive.
+
+// 	intersected = b.canPlaceLetters(start, word, deltaX, deltaY)
+
+// 	// Step 3: Check if cells immediately before and after the word are empty to
+// 	// prevent contiguous word formation.
+// 	// placed at the boarder (0,0)
+// 	if !b.isPlacementIsolated(start, lettersCountInWord, deltaX, deltaY) {
+// 		return false
+// 	}
+
+//		return intersected
+//	}
+//
+// REM debugging
 func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction) bool {
-	// fmt.Printf("Checking placement of '%s' at %d,%d direction: %v\n", word, start.X, start.Y, direction)
 	deltaX, deltaY := getDirectionDeltas(direction)
 	intersected := false
 
-	// word is a string which is a []byte. A unicode character can occupy 1-4
-	// bytes. We need to make sure that each letter occupies only 1 cell.
-	lettersCountInWord := len([]rune(word))
+	runes := []rune(word)
 
-	// Step 1: Check if word fits on the board atr a certain position.
-	if !b.isPlacementWithinBounds(start, lettersCountInWord, deltaX, deltaY) {
+	// Step 1: Ensure word fits within board bounds
+	if !b.isPlacementWithinBounds(start, len(runes), deltaX, deltaY) {
 		return false
 	}
 
-	// Step 2: Check if letters can be placed. A word needs to have at leas one
-	// intersection, but can have more if they are NOT consecutive.
+	// Step 2: Check each letter's placement validity
+	// for i, char := range runes {
+	// 	x := start.X + i*deltaX
+	// 	y := start.Y + i*deltaY
 
+	// 	// 🚨 Prevent placement if the cell is locked
+	// 	if b.Cells[y][x].LockCount > 0 {
+	// 		fmt.Printf("❌ ERROR: Cannot place word '%s' at (%d, %d), cell is locked!\n", word, x, y)
+	// 		return false
+	// 	}
+
+	// 	// If the cell is already occupied, it must match the letter
+	// 	if b.Cells[y][x].Filled {
+	// 		if b.Cells[y][x].Character != string(char) {
+	// 			fmt.Printf("❌ ERROR: Overwriting existing letter at (%d, %d): '%s' with '%s'\n",
+	// 				x, y, b.Cells[y][x].Character, string(char))
+	// 			return false
+	// 		}
+	// 		intersected = true
+	// 	}
+	// }
 	intersected = b.canPlaceLetters(start, word, deltaX, deltaY)
 
-	// Step 3: Check if cells immediately before and after the word are empty to
-	// prevent contiguous word formation.
-	// placed at the boarder (0,0)
-	if !b.isPlacementIsolated(start, lettersCountInWord, deltaX, deltaY) {
+	// 🚨 NEW: Ensure the cells before and after are not locked
+	if !b.isPlacementIsolated(start, len(runes), deltaX, deltaY) {
+		fmt.Printf("❌ ERROR: Word '%s' at (%d, %d) is not isolated\n", word, start.X, start.Y)
 		return false
 	}
 
+	// Step 3: Ensure word actually intersects at least once
 	return intersected
 }
 
@@ -128,20 +173,48 @@ func (b *Board) CanPlaceWordAt(start Location, word string, direction Direction)
 // (1,0) for across.
 //
 // Returns: weather it's an isolated placement
+
+// func (b *Board) isPlacementIsolated(start Location, lettersInWord, deltaX, deltaY int) bool {
+// 	// Check the cell before the word
+// 	xBefore, yBefore := start.X-deltaX, start.Y-deltaY
+// 	if !isOutOfBound(xBefore, yBefore, b) && isCellFilled(xBefore, yBefore, b) {
+// 		return false
+// 	}
+
+// 	// Check the cell after the word
+// 	xAfter, yAfter := start.X+lettersInWord*deltaX, start.Y+lettersInWord*deltaY
+// 	if !isOutOfBound(xAfter, yAfter, b) && isCellFilled(xAfter, yAfter, b) {
+// 		return false
+// 	}
+
+//		return true
+//	}
+//
+// REM debugging
 func (b *Board) isPlacementIsolated(start Location, lettersInWord, deltaX, deltaY int) bool {
+	isIsolated := true
+
 	// Check the cell before the word
 	xBefore, yBefore := start.X-deltaX, start.Y-deltaY
 	if !isOutOfBound(xBefore, yBefore, b) && isCellFilled(xBefore, yBefore, b) {
-		return false
+		fmt.Printf("❌ ERROR: Cell BEFORE word at (%d, %d) is occupied!\n", xBefore, yBefore)
+		isIsolated = false
 	}
 
 	// Check the cell after the word
 	xAfter, yAfter := start.X+lettersInWord*deltaX, start.Y+lettersInWord*deltaY
 	if !isOutOfBound(xAfter, yAfter, b) && isCellFilled(xAfter, yAfter, b) {
-		return false
+		fmt.Printf("❌ ERROR: Cell AFTER word at (%d, %d) is occupied!\n", xAfter, yAfter)
+		isIsolated = false
 	}
 
-	return true
+	if isIsolated {
+		fmt.Printf("✅ Word at (%d, %d) is properly isolated.\n", start.X, start.Y)
+	} else {
+		fmt.Printf("❌ Word at (%d, %d) is NOT isolated! Placement should be blocked.\n", start.X, start.Y)
+	}
+
+	return isIsolated
 }
 
 // New function to handle character placement checks
@@ -150,6 +223,13 @@ func (b *Board) canPlaceLetters(start Location, word string, deltaX, deltaY int)
 	intersectionCount := 0
 	runes := []rune(word)
 	consecutiveIntersections := 0 // Track consecutive intersections
+
+	// if word == "wieder" {
+	// 	fmt.Println(word)
+	// }
+	// if word == "kaputt" {
+	// 	fmt.Println(word)
+	// }
 
 	for i := 0; i < len(runes); i++ {
 		x := start.X + i*deltaX
@@ -183,6 +263,10 @@ func (b *Board) canPlaceLetters(start Location, word string, deltaX, deltaY int)
 // Check weather a cell is filled and if the character is the same as the
 // letter we are trying to fill it with.
 func (b *Board) isValidIntersection(x, y int, char string) bool {
+	// if b.Cells[y][x].Filled {
+	// 	return b.Cells[y][x].Character == char
+	// }
+	// return true
 	return b.Cells[y][x].Filled && b.Cells[y][x].Character == char
 }
 
@@ -251,27 +335,23 @@ func isParallelPlacement(x, y int, direction Direction, b *Board) bool {
 
 		// Return true if either the cell directly above or below is filled.
 		return aboveIsFilled || belowIsFilled
-	} else if direction == Down {
-		// Check cell left and right of each letter, but only within bounds.
-		// This block handles the vertical placement of words.
-		leftIsFilled := false
-		rightIsFilled := false
-
-		// Check to the left of the current cell if it's not out of bounds.
-		if !isOutOfBound(x-1, y, b) {
-			leftIsFilled = isCellFilled(x-1, y, b)
-		}
-		// Check to the right of the current cell if it's not out of bounds.
-		if !isOutOfBound(x+1, y, b) {
-			rightIsFilled = isCellFilled(x+1, y, b)
-		}
-
-		// Return true if either the cell directly left or right is filled.
-		return leftIsFilled || rightIsFilled
 	}
-	// If no specific direction is applicable, default to true as a safe
-	// fallback.
-	return true
+	// Check cell left and right of each letter, but only within bounds.
+	// This block handles the vertical placement of words.
+	leftIsFilled := false
+	rightIsFilled := false
+
+	// Check to the left of the current cell if it's not out of bounds.
+	if !isOutOfBound(x-1, y, b) {
+		leftIsFilled = isCellFilled(x-1, y, b)
+	}
+	// Check to the right of the current cell if it's not out of bounds.
+	if !isOutOfBound(x+1, y, b) {
+		rightIsFilled = isCellFilled(x+1, y, b)
+	}
+
+	// Return true if either the cell directly left or right is filled.
+	return leftIsFilled || rightIsFilled
 }
 
 func isCellFilled(x, y int, b *Board) bool {
@@ -305,30 +385,66 @@ func getDirectionDeltas(direction Direction) (int, int) {
 //
 // Returns: An error if the placement is invalid (not implemented here, returns
 // nil by default).
-func (b *Board) PlaceWordAt(start Location, word string, direction Direction) error {
-	// Obtain the deltas for the direction to determine how to increment the
-	// position for each character.
-	deltaX, deltaY := getDirectionDeltas(direction)
+// func (b *Board) PlaceWordAt(start Location, word string, direction Direction) error {
+// 	// Obtain the deltas for the direction to determine how to increment the
+// 	// position for each character.
+// 	// REM debugging
+// 	fmt.Printf("📌 Attempting to place: %s at (%d, %d) %v\n", word, start.X, start.Y, direction)
 
-	// Convert the word into a slice of runes to properly handle multi-byte
-	// characters, which are common in languages that use characters beyond the
-	// standard ASCII set.
+// 	deltaX, deltaY := getDirectionDeltas(direction)
+
+// 	// Convert the word into a slice of runes to properly handle multi-byte
+// 	// characters, which are common in languages that use characters beyond the
+// 	// standard ASCII set.
+// 	runes := []rune(word)
+
+// 	for i, r := range runes {
+// 		x := start.X + i*deltaX
+// 		y := start.Y + i*deltaY
+// 		cell := b.Cells[y][x]
+// 		cell.Character = string(r)
+// 		cell.Filled = true
+// 		cell.UsageCount++
+
+// 		// REM debugging
+// 		fmt.Printf("  ✅ Placed '%s' at (%d, %d), UsageCount: %d\n", string(r), x, y, cell.UsageCount)
+
+// 	}
+
+// 	b.PlacedWords = append(b.PlacedWords, PlacedWord{Start: start, Direction: direction, Word: word})
+// 	b.WordCount++
+
+// 	//TODO: error handling
+// 	// REM debugging
+// 	fmt.Printf("✅ Successfully placed: %s at (%d, %d) %v\n", word, start.X, start.Y, direction)
+
+//		return nil
+//	}
+//
+// REM debugging
+func (b *Board) PlaceWordAt(start Location, word string, direction Direction) error {
+	fmt.Printf("📌 Placing word: %s at (%d, %d) %v\n", word, start.X, start.Y, direction)
+
+	deltaX, deltaY := getDirectionDeltas(direction)
 	runes := []rune(word)
 
 	for i, r := range runes {
 		x := start.X + i*deltaX
 		y := start.Y + i*deltaY
+
 		cell := b.Cells[y][x]
 		cell.Character = string(r)
 		cell.Filled = true
 		cell.UsageCount++
+
+		fmt.Printf("  ✅ Placed '%s' at (%d, %d), UsageCount: %d\n", string(r), x, y, cell.UsageCount)
 	}
+
+	// 🚨 NEW: Lock cells before and after the word
+	b.lockAdjacentCells(start, len(runes), deltaX, deltaY)
 
 	b.PlacedWords = append(b.PlacedWords, PlacedWord{Start: start, Direction: direction, Word: word})
 	b.WordCount++
-
-	//TODO: error handling
-
 	return nil
 }
 
@@ -339,26 +455,68 @@ func (b *Board) IsComplete() bool {
 }
 
 // Assuming each cell knows which word it belongs to (you might need to adjust your data structures)
+// func (b *Board) RemoveWord(start Location, word string, direction Direction) {
+// 	deltaX, deltaY := getDirectionDeltas(direction)
+// 	runes := []rune(word)
+// 	for i := range runes {
+// 		x := start.X + i*deltaX
+// 		y := start.Y + i*deltaY
+// 		cell := b.Cells[y][x]
+// 		// Only decrement usage if this word was actually using the cell
+// 		if cell.Filled && cell.Character == string(runes[i]) {
+// 			cell.UsageCount--
+// 		}
+
+// 		if cell.UsageCount == 0 {
+// 			cell.Character = "" // Clear the character only if no other word is using this cell
+// 			cell.Filled = false
+// 		}
+// 		// REM debug info
+// 		if x == 14 && y == 13 && (word == "wieder" || b.Cells[14][13].Filled == true) {
+// 			fmt.Printf("CELL (14,13): %v, %v\n", b.Cells[14][13].Filled, b.Cells[14][13].Character)
+// 		}
+
+// 	}
+// 	// Remove the word from PlacedWords and update WordCount
+// 	for index, placed := range b.PlacedWords {
+// 		if placed.Start == start && placed.Word == word && placed.Direction == direction {
+// 			b.PlacedWords = append(b.PlacedWords[:index], b.PlacedWords[index+1:]...)
+// 			break
+// 		}
+// 	}
+// 	b.WordCount--
+// }
+
+// REM debugging
 func (b *Board) RemoveWord(start Location, word string, direction Direction) {
+	fmt.Printf("🔄 Backtracking: Removing word %s from (%d, %d) %v\n", word, start.X, start.Y, direction)
+
 	deltaX, deltaY := getDirectionDeltas(direction)
 	runes := []rune(word)
+
 	for i := range runes {
 		x := start.X + i*deltaX
 		y := start.Y + i*deltaY
 		cell := b.Cells[y][x]
-		cell.UsageCount-- // Decrement the usage counter for this cell
+
+		cell.UsageCount--
 		if cell.UsageCount == 0 {
-			cell.Character = "" // Clear the character only if no other word is using this cell
+			cell.Character = ""
 			cell.Filled = false
 		}
 	}
-	// Remove the word from PlacedWords and update WordCount
+
+	// 🚨 NEW: Unlock cells before and after the word
+	b.unlockAdjacentCells(start, len(runes), deltaX, deltaY)
+
+	// Remove word from placed words list
 	for index, placed := range b.PlacedWords {
 		if placed.Start == start && placed.Word == word && placed.Direction == direction {
 			b.PlacedWords = append(b.PlacedWords[:index], b.PlacedWords[index+1:]...)
 			break
 		}
 	}
+
 	b.WordCount--
 }
 
@@ -382,22 +540,90 @@ func (b *Board) SaveBestSolution() {
 
 // PrintBestSolution outputs the crossword board to the console. It marks filled
 // cells with their respective characters and empty cells with a dot.
+// func (b *Board) PrintBestSolution() {
+// 	if b.BestBoard == nil {
+// 		fmt.Println("No valid crossword solution found.")
+// 		return
+// 	}
+
+//		// fmt.Println("\nBest Solution Found:")
+//		for y := 0; y < len(b.BestBoard); y++ {
+//			for x := 0; x < len(b.BestBoard[0]); x++ {
+//				cell := b.BestBoard[y][x]
+//				if cell != nil && cell.Filled {
+//					fmt.Print(strings.ToUpper(cell.Character), " ")
+//				} else {
+//					fmt.Print(". ")
+//				}
+//			}
+//			fmt.Println()
+//		}
+//	}
+//
+// REM debug version
 func (b *Board) PrintBestSolution() {
 	if b.BestBoard == nil {
-		fmt.Println("No valid crossword solution found.")
+		fmt.Println("❌ No valid crossword solution found.")
 		return
 	}
 
-	// fmt.Println("\nBest Solution Found:")
+	fmt.Println("\n🔎 Final Board Rendering:")
 	for y := 0; y < len(b.BestBoard); y++ {
 		for x := 0; x < len(b.BestBoard[0]); x++ {
 			cell := b.BestBoard[y][x]
 			if cell != nil && cell.Filled {
 				fmt.Print(strings.ToUpper(cell.Character), " ")
 			} else {
-				fmt.Print(". ")
+				if cell.LockCount > 0 {
+					fmt.Print("☐ ")
+				} else {
+					fmt.Print("・")
+				}
 			}
 		}
 		fmt.Println()
+	}
+
+	fmt.Println("\n📌 Words officially placed (from BestPlacedWords):")
+	for _, placed := range b.BestPlacedWords {
+		fmt.Printf("  → %s at (%d, %d) %v\n", placed.Word, placed.Start.X, placed.Start.Y, placed.Direction)
+	}
+
+	fmt.Printf("\n✅ Words placed: %d / %d\n", len(b.BestPlacedWords), b.TotalWords)
+	if len(b.BestPlacedWords) < b.TotalWords {
+		fmt.Println("⚠️ WARNING: Not all words were placed correctly!")
+	}
+	fmt.Println("=======================================")
+}
+
+func (b *Board) lockAdjacentCells(start Location, lettersInWord, deltaX, deltaY int) {
+	// Lock the cell before the word
+	xBefore, yBefore := start.X-deltaX, start.Y-deltaY
+	if !isOutOfBound(xBefore, yBefore, b) {
+		b.Cells[yBefore][xBefore].LockCount++
+		fmt.Printf("🔒 Locking cell before word at (%d, %d), LockCount: %d\n", xBefore, yBefore, b.Cells[yBefore][xBefore].LockCount)
+	}
+
+	// Lock the cell after the word
+	xAfter, yAfter := start.X+lettersInWord*deltaX, start.Y+lettersInWord*deltaY
+	if !isOutOfBound(xAfter, yAfter, b) {
+		b.Cells[yAfter][xAfter].LockCount++
+		fmt.Printf("🔒 Locking cell after word at (%d, %d), LockCount: %d\n", xAfter, yAfter, b.Cells[yAfter][xAfter].LockCount)
+	}
+}
+
+func (b *Board) unlockAdjacentCells(start Location, lettersInWord, deltaX, deltaY int) {
+	// Unlock the cell before the word
+	xBefore, yBefore := start.X-deltaX, start.Y-deltaY
+	if !isOutOfBound(xBefore, yBefore, b) {
+		b.Cells[yBefore][xBefore].LockCount--
+		fmt.Printf("🔓 Unlocking cell before word at (%d, %d), LockCount: %d\n", xBefore, yBefore, b.Cells[yBefore][xBefore].LockCount)
+	}
+
+	// Unlock the cell after the word
+	xAfter, yAfter := start.X+lettersInWord*deltaX, start.Y+lettersInWord*deltaY
+	if !isOutOfBound(xAfter, yAfter, b) {
+		b.Cells[yAfter][xAfter].LockCount--
+		fmt.Printf("🔓 Unlocking cell after word at (%d, %d), LockCount: %d\n", xAfter, yAfter, b.Cells[yAfter][xAfter].LockCount)
 	}
 }

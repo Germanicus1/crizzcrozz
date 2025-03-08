@@ -11,17 +11,10 @@ import (
 
 	"flag"
 
-	"github.com/Germanicus1/crizzcrozz/pkg/generators"
-	"github.com/Germanicus1/crizzcrozz/pkg/models"
+	"github.com/Germanicus1/crizzcrozz/internal/generators"
+	"github.com/Germanicus1/crizzcrozz/internal/models"
 	"github.com/gocarina/gocsv"
 )
-
-// wordsAndHints defines a struct for mapping words and their hints from
-// a CSV file.
-type wordsAndHints struct {
-	Word string `csv:"word"`
-	Hint string `csv:"hint"`
-}
 
 // Define custom error for invalid dimensions.
 var ErrInvalidDimensions = errors.New("invalid board dimensions")
@@ -65,6 +58,8 @@ func main() {
 	fmt.Printf("Board size: %dx%d | Words placed: %d/%d\n", bestBoard.Bounds.Width(), bestBoard.Bounds.Height(), bestBoard.BestWordCount, bestBoard.TotalWords)
 	bestBoard.PrintBestSolution()
 
+	// fmt.Println("CELL (14,13):", bestBoard.Cells[14][13].Filled)
+
 	// TODO: Implement discovery of smallest board size possible with all the
 	// words placed.
 
@@ -82,7 +77,7 @@ func parseFlags() (bool, bool, int, int, int, string) {
 	var fileName string
 	var width, height, maxRetries int
 	var findOptimalSize, estimate bool
-	flag.StringVar(&fileName, "f", "vocabulary_eng.csv", "Specify the file with the words and hints. Defaults to vocabulary.csv.")
+	flag.StringVar(&fileName, "f", "vocabulary.csv", "Specify the file with the words and hints. Defaults to vocabulary.csv.")
 	flag.IntVar(&width, "w", 1, "Specify the width of the board. Defaults to 1.")
 	flag.IntVar(&height, "h", 1, "Specify the width of the board. Defaults to 1")
 	flag.IntVar(&maxRetries, "r", 1, "Specify the max number of retries to build the crossword. Defaults to 1.")
@@ -111,7 +106,7 @@ func setUpBoard(width, height int, wordCount int) (*models.Board, error) {
 	if board == nil {
 		return nil, fmt.Errorf("failed to initialize the crossword board")
 	}
-
+	board.Save()
 	return board, nil
 }
 

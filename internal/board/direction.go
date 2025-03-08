@@ -1,4 +1,4 @@
-package models
+package board
 
 // Direction indicates the direction in which a word is placed on the
 // crossword board. It is used to specify whether a word runs

@@ -4,6 +4,8 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/Germanicus1/crizzcrozz/internal/parser"
 )
 
 func TestSortWordsByLength(t *testing.T) {
@@ -38,7 +40,7 @@ func TestReadWordsFromFile_Success(t *testing.T) {
 	defer cleanup()
 
 	// Test the function.
-	result, err := readWordsFromFile(fileName)
+	result, err := parser.ReadWordsFromFile(fileName)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

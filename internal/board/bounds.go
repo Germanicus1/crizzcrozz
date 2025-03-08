@@ -1,4 +1,4 @@
-package models
+package board
 
 import "fmt"
 

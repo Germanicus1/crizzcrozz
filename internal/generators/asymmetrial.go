@@ -57,35 +57,37 @@ func (ag *AsymmetricalGenerator) Generate() error {
 	return err
 }
 
+// REM debugging
 func (ag *AsymmetricalGenerator) placeWordsRecursive(index int) error {
 	if index >= len(ag.WordPool.Words) {
-		fmt.Println("\nAll words placed successfully!")
-		ag.Board.SaveBestSolution() // Ensure final board is saved
+		fmt.Println("\n✅ All words placed successfully! Saving best solution...")
+		ag.Board.SaveBestSolution()
 		return nil
 	}
 
-	// Stop if we've backtracked too much
-	if backtrackCount >= maxBacktracks {
-		fmt.Println("\nMax backtracking limit reached. Stopping word placement.")
-		ag.Board.SaveBestSolution() // Save before stopping
-		return fmt.Errorf("stopping due to excessive backtracking")
-	}
-
 	word := ag.WordPool.Words[index]
-	// REM fmt.Printf("Placing word #%d: %s\n", index, word)
+	fmt.Printf("\n🔍 Trying to place word #%d: %s\n", index+1, word)
 
 	placements := ag.FindPlacementLocations(word)
+	fmt.Printf("➡️ Available placements for %s: %d\n", word, len(placements))
 
 	if len(placements) == 0 {
-		// REM fmt.Println("No placements found for:", word)
+		fmt.Printf("❌ No placements found for: %s\n", word)
 		return fmt.Errorf("no placements available for word: %s", word)
 	}
 
-	failureCount := 0
-	maxFailsPerWord := len(placements) / 2
-
 	for _, location := range placements {
+		// 🚨 Check if the placement is valid before proceeding
+		if !ag.Board.CanPlaceWordAt(location.Start, word, location.Direction) {
+			fmt.Printf("⚠️ Skipping invalid placement: %s at (%d, %d) %v (Would overwrite another word)\n",
+				word, location.Start.X, location.Start.Y, location.Direction)
+			continue
+		}
+
 		if err := ag.Board.PlaceWordAt(location.Start, word, location.Direction); err == nil {
+			fmt.Printf("✅ Successfully placed word: %s at (%d, %d) %v\n",
+				word, location.Start.X, location.Start.Y, location.Direction)
+
 			err := ag.placeWordsRecursive(index + 1)
 			if err == nil {
 				return nil
@@ -93,24 +95,55 @@ func (ag *AsymmetricalGenerator) placeWordsRecursive(index int) error {
 
 			// Backtrack: remove the word and try the next placement
 			ag.Board.RemoveWord(location.Start, word, location.Direction)
-			backtrackCount++
-
-			// Save the best attempt before stopping
-			if ag.Board.WordCount > ag.Board.BestWordCount {
-				ag.Board.SaveBestSolution()
-			}
-
-			failureCount++
-			if failureCount >= maxFailsPerWord {
-				// REM fmt.Println("\nToo many failed placements for word:", word)
-				return fmt.Errorf("too many failed placements for word: %s", word)
-			}
+			fmt.Printf("🔄 Backtracking: Removed word %s from (%d, %d) %v\n",
+				word, location.Start.X, location.Start.Y, location.Direction)
 		}
 	}
 
-	// REM fmt.Printf("\nFailed to place '%s'. Stopping recursion.\n", word)
+	fmt.Printf("⚠️ Failed to place word: %s\n", word)
 	return fmt.Errorf("failed to place word: %s", word)
 }
+
+// func (ag *AsymmetricalGenerator) placeWordsRecursive(index int) error {
+// 	if index >= len(ag.WordPool.Words) {
+// 		fmt.Println("\nAll words placed successfully!")
+// 		ag.Board.SaveBestSolution() // Ensure final board is saved
+// 		return nil
+// 	}
+
+// 	word := ag.WordPool.Words[index]
+// 	// REM debug info
+// 	// fmt.Printf("Trying to place word: %s\n", word)
+
+// 	placements := ag.FindPlacementLocations(word)
+// 	// REM debug info
+// 	// fmt.Printf("Available placements for %s: %d\n", word, len(placements))
+
+// 	if len(placements) == 0 {
+// 		// REM debug info
+// 		// fmt.Printf("No placements found for: %s\n", word)
+// 		return fmt.Errorf("no placements available for word: %s", word)
+// 	}
+
+// 	for _, location := range placements {
+// 		if err := ag.Board.PlaceWordAt(location.Start, word, location.Direction); err == nil {
+// 			// REM debug info
+// 			// fmt.Printf("Placed word: %s at (%d, %d) %v\n", word, location.Start.X, location.Start.Y, location.Direction)
+
+// 			err := ag.placeWordsRecursive(index + 1)
+// 			if err == nil {
+// 				return nil
+// 			}
+
+// 			// Backtrack: remove the word and try the next placement
+// 			ag.Board.RemoveWord(location.Start, word, location.Direction)
+// 			// REM debug info
+// 			// fmt.Printf("Removed word: %s from (%d, %d) %v (Backtracking)\n", word, location.Start.X, location.Start.Y, location.Direction)
+// 		}
+// 	}
+
+// 	return fmt.Errorf("failed to place word: %s", word)
+// }
 
 type Placement struct {
 	Start     models.Location

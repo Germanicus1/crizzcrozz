@@ -1,32 +1,34 @@
-package models
+package board
 
 // Cell represents a single square on the crossword puzzle board.
 type Cell struct {
 	Character  string // The character contained in the cell, if any.
 	Filled     bool   // Indicates whether the cell is filled with a character.
 	Hint       string // An optional hint associated with this cell.
-	Locked     bool   // Indicates whether the cell is locked from being changed.
+	LockCount  int    // How many times a cell, before or after a word, is locked.
 	UsageCount int    // >1 means it is a intersection. Used for recursion (removal)
+	Locked     bool
 }
 
 // NewCell creates a new cell. If a character is provided, the cell is
 // marked as filled.
-func NewCell(char string, hint string, locked bool) *Cell {
+func NewCell(char string, hint string, lockCount int, locked bool) *Cell {
 	filled := char != "" // Assuming rune(0) means no character.
 	usageCount := 0
 	return &Cell{
 		Character:  char,
 		Filled:     filled,
 		Hint:       hint,
-		Locked:     locked,
+		LockCount:  lockCount,
 		UsageCount: usageCount,
+		Locked:     locked,
 	}
 }
 
 // NewEmptyCell creates an empty cell with no initial character, no
 // hint, and unlocked.
 func NewEmptyCell() *Cell {
-	return NewCell("", "", false)
+	return NewCell("", "", 0, false)
 }
 
 // SetCharacter sets a character to the cell and marks it as filled.
